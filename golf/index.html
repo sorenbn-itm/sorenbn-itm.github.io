@@ -50,15 +50,15 @@
         </section>
         <aside class="submission-card" id="submit" aria-labelledby="submit-title">
           <h2 id="submit-title">Submit score</h2>
-          <p>Paste the result copied from the game.</p>
+          <p id="submission-intro">Paste the result copied from the game.</p>
           <form id="name-form" class="name-form">
             <label for="player-name">Name</label>
             <div class="name-input-row"><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Your name" minlength="2" maxlength="24" required><button class="button button-green" type="submit">Save name</button></div>
             <small>Your name is fixed for this browser.</small>
             <p class="form-error" id="name-error" role="alert"></p>
           </form>
-          <p class="submission-status" id="submission-status" hidden></p>
-          <form id="score-form">
+          <p class="submission-status" id="submission-status" tabindex="-1" hidden></p>
+          <form id="score-form" hidden>
             <label for="score-text">Result</label>
             <textarea id="score-text" name="score" rows="9" placeholder="Kinda Hard Golf #561&#10;📝 25&#10;&#10;8.⛳ 5&#10;7.⛳ 2&#10;…" spellcheck="false" required aria-describedby="score-help score-error"></textarea>
             <div class="input-footer"><span id="score-help">Include all checkpoint lines.</span><button type="button" id="example-button" class="small-link">Example</button></div>

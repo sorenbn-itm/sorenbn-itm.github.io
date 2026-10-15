@@ -64,8 +64,12 @@ function renderIdentity() {
   $('#player-label').textContent = player ? player.name : 'Set name';
   $('#name-form').hidden = Boolean(player);
   const todayScore = submittedScore(mapForDate(league.config.today, league.config));
+  $('#score-form').hidden = Boolean(todayScore);
+  $('#submission-intro').hidden = Boolean(todayScore);
+  $('#submit-title').textContent = todayScore ? 'Score submitted' : 'Submit score';
   $('#submission-status').hidden = !todayScore;
-  $('#submission-status').textContent = todayScore ? `Today’s score: ${todayScore.total} shots. Submitted.` : '';
+  $('#submission-status').textContent = todayScore ? `${todayScore.total} shots · Map #${todayScore.mapNumber}` : '';
+  $('.submission-footnote').textContent = todayScore ? 'You can submit again tomorrow.' : 'One submission per map. Scores are final.';
 }
 
 function renderScorecard() {
@@ -164,6 +168,7 @@ async function saveScore() {
     $('#score-text').value = '';
     clearPreview();
     $('#detail-dialog').close();
+    if (!$('#submission-status').hidden) $('#submission-status').focus();
     toast(`Submitted: ${saved.total} shots on map #${saved.mapNumber}.`);
   } catch (error) {
     if (error.code === 'SCORE_EXISTS') {

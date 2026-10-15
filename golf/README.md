@@ -25,6 +25,8 @@ The sample season contains the week of 12–16 October 2026 and the three preced
 
 Players, browser identity, and submitted scores are stored under `office-open.mock.v1` in localStorage. Name registration is case-insensitive and the name cannot be changed through the app. Reset demo removes the identity and submissions and restores the sample league. Export scores downloads the stored dataset as JSON.
 
+After today's score is submitted, the form is replaced by the saved result. This also applies after reloading or when another tab submits the score. The form is available when the active league date has no result for the current player.
+
 This data is local to each browser and origin. It is editable through browser developer tools and provides no identity verification. The mock does not provide a shared leaderboard or protection against impersonation. Storage errors are reported instead of claiming a successful save. Tabs on the same origin refresh when storage changes.
 
 ## League rules
