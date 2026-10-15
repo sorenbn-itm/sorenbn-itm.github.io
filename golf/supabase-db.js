@@ -1,4 +1,25 @@
 import { LeagueError, parseScore } from './domain.js';
+import { accountEmail, validatePassword } from './accounts.js';
+
+function authError(error, operation) {
+  if (error.status === 429 || error.code?.includes('rate_limit')) {
+    return new LeagueError('Too many attempts. Please wait a few minutes and try again.', 'RATE_LIMIT');
+  }
+  if (['user_already_exists', 'email_exists'].includes(error.code)) {
+    return new LeagueError('That username is already taken.', 'NAME_TAKEN');
+  }
+  if (error.code === 'weak_password') return new LeagueError('Choose a stronger password of at least 8 characters.', 'WEAK_PASSWORD');
+  if (['email_not_confirmed', 'email_address_invalid', 'email_address_not_authorized', 'reauthentication_needed'].includes(error.code)) {
+    return new LeagueError('Account sign-in needs administrator setup. Please contact the league administrator.', 'SETUP_REQUIRED');
+  }
+  if (operation === 'login' && error.code === 'invalid_credentials') {
+    return new LeagueError('Incorrect username or password.', 'INVALID_CREDENTIALS');
+  }
+  if (['same_password', 'current_password_mismatch', 'current_password_required'].includes(error.code)) {
+    return new LeagueError(error.code === 'same_password' ? 'Choose a different password.' : 'The current password is incorrect.', 'INVALID_CREDENTIALS');
+  }
+  return new LeagueError('Could not complete the account request. Please try again or contact the league administrator.', 'AUTH_ERROR');
+}
 
 function databaseError(error, operation) {
   if (['PGRST202', 'PGRST205', '42P01'].includes(error.code)) {
@@ -15,6 +36,14 @@ function databaseError(error, operation) {
 }
 
 export function createSupabaseDatabase(client, storage = globalThis.localStorage) {
+  async function authRequest(operation, request) {
+    let result;
+    try { result = await request(); }
+    catch { throw new LeagueError('Could not reach the account service. Please try again.', 'NETWORK_ERROR'); }
+    if (result.error) throw authError(result.error, operation);
+    return result.data;
+  }
+
   async function rpc(name, args, operation) {
     let result;
     try { result = await client.rpc(name, args); }
@@ -34,18 +63,41 @@ export function createSupabaseDatabase(client, storage = globalThis.localStorage
       return league;
     },
 
-    async registerPlayer(name) {
-      const cleanName = typeof name === 'string' ? name.normalize('NFKC').replace(/\s+/g, ' ').trim() : '';
-      if (cleanName.length < 2 || cleanName.length > 24 || /[\p{Cc}\p{Cf}]/u.test(cleanName)) {
-        throw new LeagueError('Choose a name between 2 and 24 characters.');
+    async registerAccount(username, password) {
+      const email = accountEmail(username);
+      validatePassword(password);
+      const { session } = await authRequest('register', () => client.auth.getSession());
+      const { user } = session ? await authRequest('register', () => client.auth.getUser()) : { user: null };
+      if (user && !user.is_anonymous) throw new LeagueError('Sign out before creating another account.');
+      const league = await this.getLeague();
+      if (league.players.some(player => player.id !== user?.id && player.name.toLowerCase() === email.split('@')[0])) {
+        throw new LeagueError('That username is already taken.', 'NAME_TAKEN');
       }
-      const session = await client.auth.getSession();
-      if (session.error) throw databaseError(session.error);
-      if (!session.data.session) {
-        const signedIn = await client.auth.signInAnonymously();
-        if (signedIn.error) throw databaseError(signedIn.error);
+      const data = user?.is_anonymous
+        ? await authRequest('register', () => client.auth.updateUser({ email, password }))
+        : await authRequest('register', () => client.auth.signUp({ email, password }));
+      if (!data.user?.email_confirmed_at || data.user.is_anonymous || (!user && !data.session)) {
+        throw new LeagueError('Accounts need administrator setup before you can sign in. Please contact the league administrator.', 'SETUP_REQUIRED');
       }
-      return rpc('golf_register_player', { p_name: cleanName }, 'name');
+      return data.user;
+    },
+
+    async signIn(username, password) {
+      const email = accountEmail(username);
+      if (typeof password !== 'string' || !password) throw new LeagueError('Enter your password.');
+      return authRequest('login', () => client.auth.signInWithPassword({ email, password }));
+    },
+
+    async signOut() {
+      return authRequest('logout', () => client.auth.signOut({ scope: 'local' }));
+    },
+
+    async changePassword(currentPassword, password) {
+      validatePassword(password);
+      const { user } = await authRequest('password', () => client.auth.getUser());
+      if (!user?.email || user.is_anonymous) throw new LeagueError('Sign in before changing your password.');
+      await authRequest('login', () => client.auth.signInWithPassword({ email: user.email, password: currentPassword }));
+      return authRequest('password', () => client.auth.updateUser({ password, current_password: currentPassword }));
     },
 
     async submitScore({ rawText }) {

@@ -26,7 +26,7 @@
       <nav aria-label="Main navigation"><a href="#leaderboard">Leaderboard</a><a href="#archive">Past weeks</a></nav>
       <div class="header-actions">
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Light mode</span></button>
-        <button class="player-button" id="player-button"><span id="player-label">Set name</span></button>
+        <button class="player-button" id="player-button"><span id="player-label">Sign in</span></button>
       </div>
     </header>
     <main class="container" id="main-content">
@@ -56,12 +56,29 @@
         <aside class="submission-card" id="submit" aria-labelledby="submit-title">
           <h2 id="submit-title">Submit score</h2>
           <p id="submission-intro">Paste the result copied from the game.</p>
-          <form id="name-form" class="name-form" hidden>
-            <label for="player-name">Name</label>
-            <div class="name-input-row"><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Your name" minlength="2" maxlength="24" required><button class="button button-green" type="submit">Save name</button></div>
-            <small>Your name is fixed for this browser.</small>
-            <p class="form-error" id="name-error" role="alert"></p>
-          </form>
+          <section id="account-panel" class="account-panel" aria-labelledby="account-title" hidden>
+            <h3 id="account-title">Sign in to submit scores</h3>
+            <p id="account-intro">Use your account on any browser or device.</p>
+            <div class="account-tabs" id="account-tabs" role="group" aria-label="Account action">
+              <button type="button" id="login-tab" aria-pressed="true">Sign in</button>
+              <button type="button" id="register-tab" aria-pressed="false">Create account</button>
+            </div>
+            <form id="account-form">
+              <label for="account-username">Username</label>
+              <input id="account-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="24" pattern="[a-zA-Z0-9][a-zA-Z0-9_\-]{2,23}" required aria-describedby="username-help">
+              <small id="username-help">3–24 letters, numbers, underscores or hyphens. Start with a letter or number.</small>
+              <label for="account-password">Password</label>
+              <input id="account-password" name="password" type="password" autocomplete="current-password" required aria-describedby="password-help">
+              <small id="password-help" hidden>At least 8 characters. No email address needed.</small>
+              <div id="confirm-password-row" hidden>
+                <label for="confirm-password">Confirm password</label>
+                <input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password">
+              </div>
+              <p class="form-error" id="account-error" role="alert"></p>
+              <button class="button button-green" id="account-submit" type="submit">Sign in</button>
+            </form>
+            <p class="account-help">Forgot your password? Ask the league administrator.</p>
+          </section>
           <p class="submission-status" id="submission-status" tabindex="-1" hidden></p>
           <form id="score-form" hidden>
             <label for="score-text">Result</label>

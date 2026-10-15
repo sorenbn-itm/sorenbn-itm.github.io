@@ -26,6 +26,31 @@ create table if not exists public.golf_players (
 );
 create unique index if not exists golf_players_name_unique on public.golf_players (lower(name));
 
+create or replace function golf_private.account_username(p_id uuid)
+returns text language sql stable set search_path = '' as $$
+  select split_part(email, '@', 1) from auth.users
+  where id = p_id and is_anonymous is false and email_confirmed_at is not null
+    and coalesce(encrypted_password, '') <> ''
+    and email ~ '^[a-z0-9][a-z0-9_-]{2,23}@players[.]golf[.]invalid$'
+$$;
+
+create or replace function golf_private.create_account_player()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.is_anonymous is false and new.email_confirmed_at is not null
+    and coalesce(new.encrypted_password, '') <> ''
+    and new.email ~ '^[a-z0-9][a-z0-9_-]{2,23}@players[.]golf[.]invalid$'
+    and not exists(select 1 from public.golf_players where id = new.id) then
+    insert into public.golf_players(id, name) values(new.id, split_part(new.email, '@', 1));
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists golf_account_player on auth.users;
+create trigger golf_account_player after insert or update of email, email_confirmed_at, encrypted_password, is_anonymous
+  on auth.users for each row execute function golf_private.create_account_player();
+
 create table if not exists public.golf_scores (
   player_id uuid not null references public.golf_players(id),
   map_number integer not null check (map_number between 1 and 1000000),
@@ -135,6 +160,7 @@ declare
   v_players jsonb;
   v_scores jsonb;
   v_identity jsonb;
+  v_username text := golf_private.account_username(auth.uid());
 begin
   select * into strict v_settings from public.golf_settings where singleton;
   v_active := ((golf_private.clock() at time zone 'UTC') - make_interval(hours => v_settings.reset_hour_utc))::date;
@@ -147,7 +173,8 @@ begin
     'rawText', raw_text, 'submittedAt', submitted_at) order by course_date, player_id), '[]'::jsonb)
     into v_scores from public.golf_scores;
   return jsonb_build_object('players', v_players, 'scores', v_scores, 'courses', '[]'::jsonb,
-    'identity', v_identity, 'config', jsonb_build_object('name', 'Kinda Hard Golf scores',
+    'identity', v_identity, 'account', case when v_username is not null then jsonb_build_object('username', v_username) else null end,
+    'config', jsonb_build_object('name', 'Kinda Hard Golf scores',
       'timeZone', 'Europe/Copenhagen', 'today', v_today, 'weekdays', jsonb_build_array(1,2,3,4,5),
       'seasonStart', v_settings.season_start, 'archiveWeeks', 3,
       'mapAnchor', jsonb_build_object('date', v_settings.anchor_date, 'number', v_settings.anchor_map),
@@ -156,30 +183,7 @@ begin
 end;
 $$;
 
-create or replace function public.golf_register_player(p_name text)
-returns jsonb language plpgsql security definer set search_path = '' as $$
-declare
-  v_id uuid := auth.uid();
-  v_name text;
-  v_player public.golf_players;
-begin
-  if v_id is null then raise exception 'A player session is required.' using errcode = '42501'; end if;
-  if exists(select 1 from public.golf_players where id = v_id) then
-    raise exception 'This browser already has a name.' using errcode = '22023';
-  end if;
-  if p_name is null or char_length(p_name) > 200 then
-    raise exception 'Choose a name between 2 and 24 characters.' using errcode = '22023';
-  end if;
-  v_name := btrim(regexp_replace(normalize(p_name, NFKC), '[[:space:]]+', ' ', 'g'));
-  if char_length(v_name) not between 2 and 24 or v_name ~ '[[:cntrl:]]' then
-    raise exception 'Choose a name between 2 and 24 characters.' using errcode = '22023';
-  end if;
-  insert into public.golf_players(id, name) values(v_id, v_name) returning * into v_player;
-  return jsonb_build_object('id', v_player.id, 'name', v_player.name, 'createdAt', v_player.created_at);
-exception when unique_violation then
-  raise exception 'That name is already taken.' using errcode = '23505';
-end;
-$$;
+drop function if exists public.golf_register_player(text);
 
 create or replace function public.golf_submit_score(p_raw_text text)
 returns jsonb language plpgsql security definer set search_path = '' as $$
@@ -191,8 +195,8 @@ declare
   v_active date;
   v_score public.golf_scores;
 begin
-  if v_id is null or not exists(select 1 from public.golf_players where id = v_id) then
-    raise exception 'Enter your name before submitting a score.' using errcode = '42501';
+  if golf_private.account_username(v_id) is null or not exists(select 1 from public.golf_players where id = v_id) then
+    raise exception 'Sign in with a username and password before submitting a score.' using errcode = '42501';
   end if;
   v_parsed := golf_private.parse_score(p_raw_text);
   select * into strict v_settings from public.golf_settings where singleton;
@@ -211,8 +215,8 @@ end;
 $$;
 
 revoke all on all functions in schema golf_private from public, anon, authenticated;
-revoke all on function public.golf_state(), public.golf_register_player(text), public.golf_submit_score(text) from public, anon, authenticated;
+revoke all on function public.golf_state(), public.golf_submit_score(text) from public, anon, authenticated;
 grant execute on function public.golf_state() to anon, authenticated;
-grant execute on function public.golf_register_player(text), public.golf_submit_score(text) to authenticated;
+grant execute on function public.golf_submit_score(text) to authenticated;
 
 commit;

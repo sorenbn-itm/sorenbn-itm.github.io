@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test",
     "build": "node scripts/build.js",
-    "scrape": "node scripts/scrape-courses.js"
+    "scrape": "node scripts/scrape-courses.js",
+    "reset-password": "node scripts/reset-password.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.3"

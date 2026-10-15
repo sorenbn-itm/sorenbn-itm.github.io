@@ -11,7 +11,8 @@ const result = (map = 561, count = 3) => `Kinda Hard Golf #${map}\n📝 ${count 
 
 before(async () => {
   await db.exec(`create role anon; create role authenticated; create schema auth;
-    create table auth.users(id uuid primary key);
+    create table auth.users(id uuid primary key, email text unique, email_confirmed_at timestamptz,
+      encrypted_password text, is_anonymous boolean not null default true);
     create function auth.uid() returns uuid language sql stable as $$
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;`);
   await db.exec(await readFile(new URL('../supabase/setup.sql', import.meta.url), 'utf8'));
@@ -33,7 +34,10 @@ async function asPlayer(id, sql, args = []) {
   finally { await db.exec('reset role'); }
 }
 async function register(id, name) {
-  return (await asPlayer(id, 'select public.golf_register_player($1) as player', [name])).rows[0].player;
+  // Represent a successful managed Auth signup; password hashing belongs to Supabase Auth.
+  await db.query(`update auth.users set email = $2, email_confirmed_at = now(),
+    encrypted_password = 'managed-password-hash', is_anonymous = false where id = $1`, [id, `${name.toLowerCase()}@players.golf.invalid`]);
+  return (await state(id)).identity;
 }
 async function submit(id, text = result()) {
   return (await asPlayer(id, 'select public.golf_submit_score($1) as score', [text])).rows[0].score;
@@ -53,15 +57,70 @@ test('a new database exposes an empty league with the server calendar', async ()
 });
 
 test('anonymous visitors can read but cannot register or submit', async () => {
-  await assert.rejects(register(null, 'Alice'), { code: '42501' });
+  await assert.rejects(asPlayer(null, "insert into public.golf_players(id,name) values ($1,'Alice')", [alice]), { code: '42501' });
+  await assert.rejects(asPlayer(alice, "select public.golf_register_player('Alice')"), { code: '42883' });
   await assert.rejects(submit(null), { code: '42501' });
+  await assert.rejects(submit(alice), { code: '42501' });
 });
 
-test('names are normalized, unique ignoring case, and immutable', async () => {
-  assert.equal((await register(alice, '  Alice   Jensen ')).name, 'Alice Jensen');
-  await assert.rejects(register(bob, 'ALICE JENSEN'), { code: '23505' });
-  await assert.rejects(register(alice, 'New name'), /already has a name/);
+test('new account names use canonical usernames and direct name changes are denied', async () => {
+  assert.equal((await register(alice, 'Alice_Jensen')).name, 'alice_jensen');
+  assert.deepEqual((await state(alice)).account, { username: 'alice_jensen' });
+  assert.equal((await state(bob)).account, null);
+  await assert.rejects(register(bob, 'ALICE_JENSEN'), { code: '23505' });
   await assert.rejects(asPlayer(alice, "update public.golf_players set name = 'Other' where id = $1", [alice]), { code: '42501' });
+});
+
+test('unconfirmed, passwordless, anonymous, and unrelated identities cannot create players or submit', async () => {
+  const cases = [
+    ['alice@players.golf.invalid', null, 'managed-hash', false],
+    ['alice@players.golf.invalid', '2026-10-15', '', false],
+    ['alice@players.golf.invalid', '2026-10-15', 'managed-hash', true],
+    ['alice@example.com', '2026-10-15', 'managed-hash', false],
+    ['x@players.golf.invalid', '2026-10-15', 'managed-hash', false],
+    ['Alice@players.golf.invalid', '2026-10-15', 'managed-hash', false],
+  ];
+  for (const attributes of cases) {
+    await db.query(`update auth.users set email = $2, email_confirmed_at = $3,
+      encrypted_password = $4, is_anonymous = $5 where id = $1`, [alice, ...attributes]);
+    assert.equal((await state(alice)).identity, null);
+    assert.equal((await state(alice)).account, null);
+    await assert.rejects(submit(alice), { code: '42501' });
+  }
+  await assert.rejects(asPlayer(alice, 'update auth.users set is_anonymous = false'), { code: '42501' });
+  await assert.rejects(asPlayer(alice, 'select golf_private.account_username($1)', [bob]), { code: '42501' });
+});
+
+test('upgrading an existing browser account preserves player ID, name, and scores', async () => {
+  await db.query("insert into public.golf_players(id, name) values ($1, 'Alice Jensen')", [alice]);
+  await db.query(`insert into public.golf_scores(player_id,map_number,course_date,total,checkpoints,raw_text)
+    values ($1,560,'2026-10-14',6,'[]','existing score')`, [alice]);
+  assert.equal((await state(alice)).account, null);
+  await assert.rejects(submit(alice), { code: '42501' });
+  await register(alice, 'alice_login');
+  const league = await state(alice);
+  assert.equal(league.identity.id, alice);
+  assert.equal(league.identity.name, 'Alice Jensen');
+  assert.equal(league.players.length, 1);
+  assert.equal(league.scores[0].playerId, alice);
+  assert.deepEqual(league.account, { username: 'alice_login' });
+  assert.equal((await submit(alice)).playerId, alice);
+});
+
+test('new usernames cannot take a legacy player name and failed signups are atomic', async () => {
+  await db.query("insert into public.golf_players(id, name) values ($1, 'Alice')", [alice]);
+  await assert.rejects(register(bob, 'alice'), { code: '23505' });
+  const { rows } = await db.query('select email, is_anonymous from auth.users where id = $1', [bob]);
+  assert.equal(rows[0].email, null);
+  assert.equal(rows[0].is_anonymous, true);
+  assert.equal((await state(bob)).identity, null);
+});
+
+test('an account inserted by Auth creates its profile in the same transaction', async () => {
+  const id = '33333333-3333-4333-8333-333333333333';
+  await db.query(`insert into auth.users(id,email,email_confirmed_at,encrypted_password,is_anonymous)
+    values ($1,'casey@players.golf.invalid',now(),'managed-hash',false)`, [id]);
+  assert.equal((await state(id)).identity.name, 'casey');
 });
 
 test('scores are owned by the session and cannot be overwritten or deleted', async () => {

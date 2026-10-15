@@ -18,6 +18,8 @@ let toastTimeout;
 let statsPlayerId;
 let courseDataError = false;
 let refreshInProgress;
+let accountMode = 'login';
+let accountBusy = false;
 const signed = number => number > 0 ? `+${number}` : number === 0 ? 'Even' : String(number);
 const globalGroup = value => value < 1 ? 'top <1%' : `top ${Math.round(value)}%`;
 const stat = (label, value, detail = '') => `<div class="stat"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</div>`;
@@ -91,17 +93,38 @@ function openDialog(html) {
 
 function renderIdentity() {
   const player = league.identity;
-  $('#player-label').textContent = player ? player.name : 'Set name';
-  $('#name-form').hidden = Boolean(player);
+  const signedIn = Boolean(league.account && player);
+  const upgrading = Boolean(player && !league.account);
+  $('#player-label').textContent = signedIn ? player.name : upgrading ? 'Set password' : 'Sign in';
+  $('#account-panel').hidden = signedIn;
+  $('#account-tabs').hidden = upgrading;
+  $('#account-intro').textContent = upgrading
+    ? `Create a login for ${player.name}. Your name and scores will stay with this account.`
+    : 'Use your account on any browser or device.';
+  setAccountMode(upgrading ? 'register' : accountMode);
   const todayScore = submittedScore(activeMap(league.config));
   const available = league.config.acceptingScores;
-  $('#score-form').hidden = Boolean(todayScore) || !available;
-  $('#submission-intro').hidden = Boolean(todayScore) || !available;
-  $('#submit-title').textContent = todayScore ? 'Score submitted' : available ? 'Submit score' : 'No weekday map';
-  $('#submission-status').hidden = !todayScore;
+  $('#score-form').hidden = !signedIn || Boolean(todayScore) || !available;
+  $('#submission-intro').hidden = !signedIn || Boolean(todayScore) || !available;
+  $('#submit-title').textContent = !signedIn ? 'Your account' : todayScore ? 'Score submitted' : available ? 'Submit score' : 'No weekday map';
+  $('#submission-status').hidden = !signedIn || !todayScore;
   $('#submission-status').textContent = todayScore ? `${todayScore.total} shots · Map #${todayScore.mapNumber}` : '';
-  $('.submission-footnote').textContent = todayScore ? 'You can submit when the next weekday map opens.'
+  $('.submission-footnote').textContent = !signedIn ? 'The leaderboard is public. Sign in to submit scores.' : todayScore ? 'You can submit when the next weekday map opens.'
     : available ? 'One submission per map. Scores are final.' : 'Score entry opens with the next weekday map.';
+}
+
+function setAccountMode(mode) {
+  accountMode = mode;
+  const creating = mode === 'register';
+  $('#account-title').textContent = creating ? 'Create your account' : 'Sign in to submit scores';
+  $('#login-tab').setAttribute('aria-pressed', String(!creating));
+  $('#register-tab').setAttribute('aria-pressed', String(creating));
+  $('#account-submit').textContent = creating ? 'Create account' : 'Sign in';
+  $('#account-password').autocomplete = creating ? 'new-password' : 'current-password';
+  $('#account-password').minLength = creating ? 8 : 1;
+  $('#password-help').hidden = !creating;
+  $('#confirm-password-row').hidden = !creating;
+  $('#confirm-password').required = creating;
 }
 
 function renderScorecard() {
@@ -239,19 +262,44 @@ async function saveScore() {
   }
 }
 
-$('#name-form').addEventListener('submit', async event => {
+$('#login-tab').addEventListener('click', () => { setAccountMode('login'); $('#account-error').textContent = ''; });
+$('#register-tab').addEventListener('click', () => { setAccountMode('register'); $('#account-error').textContent = ''; });
+$('#account-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const button = event.currentTarget.querySelector('button');
-  button.disabled = true;
-  $('#name-error').textContent = '';
+  if (accountBusy) return;
+  const creating = accountMode === 'register';
+  $('#account-error').textContent = '';
+  if (creating && $('#account-password').value !== $('#confirm-password').value) {
+    $('#account-error').textContent = 'The passwords do not match.';
+    $('#confirm-password').focus();
+    return;
+  }
+  accountBusy = true;
+  $('#account-form').setAttribute('aria-busy', 'true');
+  $('#account-panel').querySelectorAll('button, input').forEach(input => { input.disabled = true; });
   try {
-    const player = await database.registerPlayer($('#player-name').value);
-    statsPlayerId = player.id;
+    const username = $('#account-username').value;
+    const password = $('#account-password').value;
+    if (creating) await database.registerAccount(username, password);
+    else await database.signIn(username, password);
+    clearPreview();
+    $('#score-text').value = '';
     await refresh();
-    toast(`Name saved: ${player.name}.`);
-    $('#score-text').focus();
-  } catch (error) { $('#name-error').textContent = error.message; }
-  finally { button.disabled = false; }
+    if (!league.account || !league.identity) throw new Error('Your account needs administrator setup. Please contact the league administrator.');
+    statsPlayerId = league.identity.id;
+    renderPlayerStats();
+    $('#account-form').reset();
+    toast(creating ? 'Account created. You’re signed in.' : `Signed in as ${league.identity.name}.`);
+    if (!$('#score-form').hidden) $('#score-text').focus();
+    else $('#player-button').focus();
+  } catch (error) { $('#account-error').textContent = error.message; }
+  finally {
+    $('#account-password').value = '';
+    $('#confirm-password').value = '';
+    accountBusy = false;
+    $('#account-form').removeAttribute('aria-busy');
+    $('#account-panel').querySelectorAll('button, input').forEach(input => { input.disabled = false; });
+  }
 });
 
 $('#score-form').addEventListener('submit', async event => {
@@ -263,9 +311,9 @@ $('#score-form').addEventListener('submit', async event => {
     catch (error) { $('#score-error').textContent = error.message; }
     return;
   }
-  if (!league.identity) {
-    $('#name-error').textContent = 'Enter your name first.';
-    $('#player-name').focus();
+  if (!league.account || !league.identity) {
+    $('#account-error').textContent = 'Sign in before submitting a score.';
+    $('#account-username').focus();
     return;
   }
   await saveScore();
@@ -307,12 +355,56 @@ $('#score-body').addEventListener('click', event => {
 });
 
 $('#player-button').addEventListener('click', () => {
-  if (!league) return;
-  if (!league.identity) {
-    $('#player-name').focus();
+  if (!league || accountBusy || saving) return;
+  if (!league.account || !league.identity) {
+    $('#account-panel').scrollIntoView({ block: 'center' });
+    $('#account-username').focus();
     return;
   }
-  openDialog(`<div class="eyebrow">Name</div><h2>${escapeHtml(league.identity.name)}</h2><p>Your name is fixed for this browser. Clearing site storage loses access to this player, but keeps the name and scores on the shared leaderboard.</p>`);
+  openDialog(`<div class="eyebrow">Your account</div><h2>${escapeHtml(league.identity.name)}</h2><p>Username: <strong>${escapeHtml(league.account.username)}</strong></p><p>Sign in with this username on any browser or device.</p><form id="password-form" class="account-panel"><h3>Change password</h3><input name="username" autocomplete="username" value="${escapeHtml(league.account.username)}" hidden><label for="current-password">Current password</label><input id="current-password" name="current-password" type="password" autocomplete="current-password" required><label for="new-password">New password</label><input id="new-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required><small>At least 8 characters.</small><label for="repeat-password">Confirm new password</label><input id="repeat-password" name="repeat-password" type="password" autocomplete="new-password" minlength="8" required><p id="password-error" class="form-error" role="alert"></p><button class="button button-green" type="submit">Change password</button></form><p class="account-help">Forgot your password? Ask the league administrator.</p><button class="button" id="sign-out" type="button">Sign out</button>`);
+  $('#password-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (accountBusy) return;
+    const form = event.currentTarget;
+    $('#password-error').textContent = '';
+    if ($('#new-password').value !== $('#repeat-password').value) {
+      $('#password-error').textContent = 'The passwords do not match.';
+      return;
+    }
+    accountBusy = true;
+    const button = form.querySelector('button');
+    const signOutButton = $('#sign-out');
+    const errorLabel = $('#password-error');
+    button.disabled = true;
+    signOutButton.disabled = true;
+    try {
+      await database.changePassword($('#current-password').value, $('#new-password').value);
+      if (form.isConnected) $('#detail-dialog').close();
+      toast('Password changed.');
+    } catch (error) { errorLabel.textContent = error.message; }
+    finally {
+      form.reset();
+      accountBusy = false;
+      button.disabled = false;
+      signOutButton.disabled = false;
+    }
+  });
+  $('#sign-out').addEventListener('click', async event => {
+    if (accountBusy) return;
+    accountBusy = true;
+    event.currentTarget.disabled = true;
+    try {
+      await database.signOut();
+      $('#detail-dialog').close();
+      $('#dialog-content').replaceChildren();
+      $('#score-text').value = '';
+      clearPreview();
+      setAccountMode('login');
+      await refresh();
+      toast('Signed out.');
+    } catch (error) { toast(error.message); }
+    finally { accountBusy = false; if ($('#sign-out')) $('#sign-out').disabled = false; }
+  });
 });
 
 $('#rules-button').addEventListener('click', () => {
@@ -320,6 +412,7 @@ $('#rules-button').addEventListener('click', () => {
 });
 
 $('.dialog-close').addEventListener('click', () => $('#detail-dialog').close());
+$('#detail-dialog').addEventListener('close', () => $('#dialog-content').replaceChildren());
 $('#detail-dialog').addEventListener('click', event => {
   if (event.target.closest('[data-close]')) $('#detail-dialog').close();
   const bounds = $('#detail-dialog').getBoundingClientRect();
@@ -343,14 +436,14 @@ function showConnectionError(error) {
   $('#connection-status').hidden = false;
   $('#connection-status').textContent = error.message;
   if (!league) {
-    $('#name-form').hidden = true;
+    $('#account-panel').hidden = true;
     $('#score-form').hidden = true;
     $('#score-body').innerHTML = `<tr><td colspan="8" class="empty-message">${escapeHtml(error.message)}</td></tr>`;
   }
 }
 
 function refreshWhenVisible() {
-  if (document.visibilityState === 'visible' && !refreshInProgress && !saving) refresh().catch(showConnectionError);
+  if (document.visibilityState === 'visible' && !refreshInProgress && !saving && !accountBusy) refresh().catch(showConnectionError);
 }
 
 window.addEventListener('storage', event => {

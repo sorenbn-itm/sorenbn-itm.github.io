@@ -23,21 +23,39 @@ npm run build
 
 ## Supabase setup
 
-1. Enable anonymous sign-ins in the Supabase project's Authentication settings.
-2. Run the complete contents of `supabase/setup.sql` in the project's SQL Editor. It creates empty tables and the required functions and access policies. Rerunning it preserves existing players, scores, and the season start.
+1. In Supabase **Authentication → Sign In / Providers**, enable email/password sign-in and new-user signups, disable **Confirm email**, and disable new anonymous sign-ins. Set the minimum password length to **8**. Leave email-based password reauthentication and email notifications off; require the current password for password changes where that setting is available. Enable **Allow manual linking** for existing anonymous players to add credentials. Keep the project's authentication rate limits enabled. No SMTP setup is needed.
+2. Run the complete contents of `supabase/setup.sql` in the project's SQL Editor before publishing the frontend. It creates tables, an Auth trigger, and the required functions and access policies. Rerunning it preserves existing players, scores, and the season start. The change blocks score submissions from old anonymous sessions until those players set a username and password.
 3. Set the project URL and publishable key in `supabase-config.js`. This key is public configuration. Do not use a secret or service-role key.
 4. Push the site changes to `main` to run the Pages workflow, or build with `npm run build` and deploy `dist/`. The published route is `/golf/`.
-5. Register your real player name on the published site. Sessions are specific to each browser origin; a localhost session does not transfer to GitHub Pages.
+5. Create a username and password on the published site. Existing players must do this in the browser where they previously registered to retain their player ID, display name, and scores. Sessions are specific to each browser origin; a localhost session does not transfer to GitHub Pages. After creating credentials, the same account works on other devices.
 
 The default season starts on the Monday of the week when setup first runs. The database's `golf_settings` row contains the season start, map-date anchor, and game reset hour. Map zero is 2 April 2025, and the game changes its map at 04:00 UTC. Weekly standings use the server's current Copenhagen date; entry and today's player statistics use the active game map, which can belong to the previous calendar day overnight. Weekend maps are not eligible.
 
-There is no seed data. A successful shared database read removes the old browser demo key `office-open.mock.v1` without importing it. Theme preferences remain under `golf.theme`. Anonymous session tokens are managed by the Supabase client under `golf.auth.v1`; exports never include tokens. Clearing site storage loses access to that player, while the shared name and scores remain stored.
+There is no seed data. A successful shared database read removes the old browser demo key `office-open.mock.v1` without importing it. Theme preferences remain under `golf.theme`. Session tokens are managed by the Supabase client under `golf.auth.v1`; exports never include tokens, account identifiers, or passwords. Clearing site storage signs the user out; they can sign back in with their credentials.
 
 The form disappears after the active map's score is submitted and stays hidden after reload. The page refreshes shared standings on focus, after writes, after identity changes, and once per minute while visible. It updates the active week and score-entry state as the server date or game map changes.
 
-The public leaderboard exposes player names and scores. Only a registered anonymous session can submit for its own player. Names and score submissions are insert-only through validated database functions; direct API inserts, updates, and deletes are denied. Unique constraints enforce names and player/map pairs. Browser checks provide feedback; the database independently parses the raw result and validates totals, checkpoint lines, dates, and ownership.
+The public leaderboard exposes player names and scores. Only a registered password account can submit for its own player. Player profiles are created by an Auth trigger; direct API inserts, updates, and deletes are denied. Unique constraints enforce names and player/map pairs. Browser checks provide feedback; the database independently checks the account, parses the raw result, and validates totals, checkpoint lines, dates, and ownership.
 
 The API currently returns all submitted league history in one snapshot, preserving the last-20-round handicap calculation. This is intended for a small office league. Test the table and function permissions after changing the schema. The local SQL checks run the setup in an isolated PostgreSQL WASM runtime with Supabase's roles and identity function represented locally; they do not create players or scores in the live project.
+
+## Accounts and passwords
+
+Usernames are case-insensitive, 3–24 ASCII letters, numbers, underscores or hyphens, starting with a letter or number. New players use their lowercase username as their leaderboard name. Existing players retain their display name when adding credentials. Usernames are fixed in the app.
+
+Supabase requires email- or phone-based password identities. The client maps a username to `username@players.golf.invalid`, a reserved, non-deliverable identifier. Users never provide an email address, and email confirmation must remain disabled. Do not add real email addresses or email-based recovery to these identities.
+
+Supabase Auth stores passwords with bcrypt and a separate random salt for each password; the app does not store or hash passwords itself. New passwords require at least 8 characters and at most 72 UTF-8 bytes, bcrypt's input limit. Enforce the 8-character minimum in Supabase as well as in the form. The account dialog requires the current password before accepting a change. Only session tokens persist in browser storage. See [Supabase password security](https://supabase.com/docs/guides/auth/password-security).
+
+There is no email password recovery. The league administrator must verify the requester independently before resetting an account. On a trusted computer, set `SUPABASE_SERVICE_ROLE_KEY` in the terminal environment, then run from `golf/`:
+
+```sh
+npm run reset-password -- username
+```
+
+The script prompts for the new password twice without echoing it. Never place the administrator key in public configuration, source control, browser code, or command arguments. Remove it from the terminal environment after use. The reset script is excluded from the published site. Give the temporary password to its owner privately; they can change it after signing in.
+
+If an existing anonymous player's browser session has already been lost, account creation cannot establish ownership of that player's scores. An administrator must verify the owner and recover or transfer the player; matching a public name is insufficient.
 
 ## Handicaps and player statistics
 
@@ -83,7 +101,7 @@ The browser reads game statistics from the checked-in JSON feed, avoiding cross-
 - `app.js`: rendering, forms, dialogs, and interactions.
 - `domain.js`: parsing, date arithmetic, standings, and awards.
 - `config.js`: initial calendar defaults and active-map selection; server configuration takes precedence.
-- `database.js`, `supabase-db.js`, `supabase-config.js`: client initialization, database adapter, and public project configuration.
+- `accounts.js`, `database.js`, `supabase-db.js`, `supabase-config.js`: username/password validation, client initialization, database adapter, and public project configuration.
 - `supabase/setup.sql`: schema, server validation, permissions, and backend calendar.
 - `scripts/build.js`, `vendor/`: bundled client and allowlisted Pages artifact.
 - `tests/`: domain, collection, adapter, and SQL permission checks; never published.
@@ -95,7 +113,10 @@ The browser reads game statistics from the checked-in JSON feed, avoiding cross-
 | Method | Result |
 | --- | --- |
 | `getLeague()` | `{ config, players, scores, courses, identity }` from `golf_state()` |
-| `registerPlayer(name)` | Anonymous session and immutable player record from `golf_register_player()` |
+| `registerAccount(username, password)` | Managed Auth signup, or credentials added to the current anonymous player |
+| `signIn(username, password)` | Supabase password session |
+| `signOut()` | Sign out of the current device |
+| `changePassword(currentPassword, password)` | Reauthenticate and update the managed password |
 | `submitScore({ rawText })` | Server-parsed score from `golf_submit_score()` |
 | `exportData()` | JSON containing calendar, players, and submitted scores; no auth session |
 

@@ -124,14 +124,11 @@ tr.own-row { background: var(--own); }
 .submission-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 23px; }
 .submission-card h2 { font-size: 21px; }
 .submission-card > p { font-size: 12px; line-height: 1.7; color: var(--muted); margin: 11px 0 20px; }
-.name-form { margin-bottom: 21px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
 label { display: block; margin-bottom: 9px; font-size: 12px; font-weight: 550; }
-.name-input-row { display: flex; gap: 7px; }
 input, textarea { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
 input { width: 100%; padding: 11px 10px; font-size: 12px; }
 textarea { display: block; width: 100%; min-height: 210px; resize: vertical; padding: 13px; font-size: 12px; line-height: 1.65; }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
-.name-form small { display: block; margin-top: 9px; color: var(--muted); font-size: 11px; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 40px; border-radius: 6px; padding: 11px 13px; font-size: 12px; font-weight: 550; white-space: nowrap; }
 .button-green { background: var(--accent); color: var(--accent-ink); }
 .button-green:hover:not(:disabled) { filter: brightness(1.1); }
@@ -189,6 +186,16 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 .stat dd { margin: 9px 0 0; font-size: 24px; font-weight: 600; }
 .stat small { display: block; margin-top: 8px; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .stats-note { color: var(--muted); font-size: 12px; line-height: 1.8; margin: 13px 0 0; }
+.account-panel h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+.account-panel p, .account-help { color: var(--muted); font-size: 12px; line-height: 1.7; }
+.account-panel label { display: block; margin: 16px 0 7px; font-size: 12px; }
+.account-panel input { display: block; width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.account-panel small { display: block; color: var(--muted); margin-top: 7px; font-size: 11px; line-height: 1.6; }
+.account-panel .button { width: 100%; margin-top: 14px; }
+.account-panel .form-error { color: var(--error); }
+.account-tabs { display: flex; gap: 4px; padding: 4px; background: var(--paper); border-radius: 6px; }
+.account-tabs button { flex: 1; padding: 9px 5px; border-radius: 4px; font-size: 12px; color: var(--muted); }
+.account-tabs button[aria-pressed="true"] { color: var(--ink); background: var(--raised); }
 .dialog-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dialog-stats .stat dd { font-size: 20px; }
 select:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }

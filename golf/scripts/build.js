@@ -32,7 +32,7 @@ async function copyDirectory(source, target) {
 }
 await mkdir(destination, { recursive: true });
 for (const name of ['index.html', 'styles.css', 'app.js', 'config.js', 'domain.js', 'database.js',
-  'supabase-config.js', 'supabase-db.js', 'course-data.js']) await copyFile(join(golf, name), join(destination, name));
+  'supabase-config.js', 'supabase-db.js', 'accounts.js', 'course-data.js']) await copyFile(join(golf, name), join(destination, name));
 for (const name of ['assets', 'data', 'vendor']) await copyDirectory(join(golf, name), join(destination, name));
 await writeFile(resolve(destination, '../.nojekyll'), '');
 console.log('Built dist/golf/');
