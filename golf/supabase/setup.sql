@@ -24,7 +24,7 @@ create table if not exists public.golf_players (
   name text not null check (char_length(name) between 2 and 24 and name !~ '[[:cntrl:]]'),
   created_at timestamptz not null default current_timestamp
 );
-create unique index if not exists golf_players_name_unique on public.golf_players (lower(name));
+drop index if exists public.golf_players_name_unique;
 
 create or replace function golf_private.account_username(p_id uuid)
 returns text language sql stable set search_path = '' as $$
@@ -185,6 +185,29 @@ $$;
 
 drop function if exists public.golf_register_player(text);
 
+create or replace function public.golf_update_display_name(p_name text)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare
+  v_id uuid := auth.uid();
+  v_name text;
+  v_player public.golf_players;
+begin
+  if golf_private.account_username(v_id) is null then
+    raise exception 'Sign in before changing your display name.' using errcode = '42501';
+  end if;
+  if p_name is null or char_length(p_name) > 200 then
+    raise exception 'Choose a display name between 2 and 24 characters.' using errcode = '22023';
+  end if;
+  v_name := btrim(regexp_replace(normalize(p_name, NFKC), '[[:space:]]+', ' ', 'g'));
+  if char_length(v_name) not between 2 and 24 or v_name ~ '[[:cntrl:]]' then
+    raise exception 'Choose a display name between 2 and 24 characters.' using errcode = '22023';
+  end if;
+  update public.golf_players set name = v_name where id = v_id returning * into v_player;
+  if not found then raise exception 'Your player account could not be found.' using errcode = '42501'; end if;
+  return jsonb_build_object('id', v_player.id, 'name', v_player.name, 'createdAt', v_player.created_at);
+end;
+$$;
+
 create or replace function public.golf_submit_score(p_raw_text text)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
@@ -215,8 +238,8 @@ end;
 $$;
 
 revoke all on all functions in schema golf_private from public, anon, authenticated;
-revoke all on function public.golf_state(), public.golf_submit_score(text) from public, anon, authenticated;
+revoke all on function public.golf_state(), public.golf_submit_score(text), public.golf_update_display_name(text) from public, anon, authenticated;
 grant execute on function public.golf_state() to anon, authenticated;
-grant execute on function public.golf_submit_score(text) to authenticated;
+grant execute on function public.golf_submit_score(text), public.golf_update_display_name(text) to authenticated;
 
 commit;

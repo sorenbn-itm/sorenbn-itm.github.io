@@ -1,5 +1,5 @@
 import { LeagueError, parseScore } from './domain.js';
-import { accountEmail, validatePassword } from './accounts.js';
+import { accountEmail, normalizeDisplayName, validatePassword } from './accounts.js';
 
 function authError(error, operation) {
   if (error.status === 429 || error.code?.includes('rate_limit')) {
@@ -69,10 +69,6 @@ export function createSupabaseDatabase(client, storage = globalThis.localStorage
       const { session } = await authRequest('register', () => client.auth.getSession());
       const { user } = session ? await authRequest('register', () => client.auth.getUser()) : { user: null };
       if (user && !user.is_anonymous) throw new LeagueError('Sign out before creating another account.');
-      const league = await this.getLeague();
-      if (league.players.some(player => player.id !== user?.id && player.name.toLowerCase() === email.split('@')[0])) {
-        throw new LeagueError('That username is already taken.', 'NAME_TAKEN');
-      }
       const data = user?.is_anonymous
         ? await authRequest('register', () => client.auth.updateUser({ email, password }))
         : await authRequest('register', () => client.auth.signUp({ email, password }));
@@ -98,6 +94,10 @@ export function createSupabaseDatabase(client, storage = globalThis.localStorage
       if (!user?.email || user.is_anonymous) throw new LeagueError('Sign in before changing your password.');
       await authRequest('login', () => client.auth.signInWithPassword({ email: user.email, password: currentPassword }));
       return authRequest('password', () => client.auth.updateUser({ password, current_password: currentPassword }));
+    },
+
+    async updateDisplayName(name) {
+      return rpc('golf_update_display_name', { p_name: normalizeDisplayName(name) });
     },
 
     async submitScore({ rawText }) {

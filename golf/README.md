@@ -35,13 +35,13 @@ There is no seed data. A successful shared database read removes the old browser
 
 The form disappears after the active map's score is submitted and stays hidden after reload. The page refreshes shared standings on focus, after writes, after identity changes, and once per minute while visible. It updates the active week and score-entry state as the server date or game map changes.
 
-The public leaderboard exposes player names and scores. Only a registered password account can submit for its own player. Player profiles are created by an Auth trigger; direct API inserts, updates, and deletes are denied. Unique constraints enforce names and player/map pairs. Browser checks provide feedback; the database independently checks the account, parses the raw result, and validates totals, checkpoint lines, dates, and ownership.
+The public leaderboard exposes player display names and scores. Only a registered password account can submit for its own player. Player profiles are created by an Auth trigger; display names are updated through an ownership-checked database function. Direct API inserts, updates, and deletes are denied. Unique constraints enforce account identifiers and player/map pairs. Browser checks provide feedback; the database independently checks the account, parses the raw result, and validates totals, checkpoint lines, dates, and ownership.
 
 The API currently returns all submitted league history in one snapshot, preserving the last-20-round handicap calculation. This is intended for a small office league. Test the table and function permissions after changing the schema. The local SQL checks run the setup in an isolated PostgreSQL WASM runtime with Supabase's roles and identity function represented locally; they do not create players or scores in the live project.
 
 ## Accounts and passwords
 
-Usernames are case-insensitive, 3–24 ASCII letters, numbers, underscores or hyphens, starting with a letter or number. New players use their lowercase username as their leaderboard name. Existing players retain their display name when adding credentials. Usernames are fixed in the app.
+Usernames are unique and case-insensitive, 3–24 ASCII letters, numbers, underscores or hyphens, starting with a letter or number. Usernames are fixed in the app. New players' display names default to their lowercase username; existing players retain their display name when adding credentials. Players can change their display name in the account dialog at any time. Display names allow 2–24 characters, are normalized for whitespace, and can be shared by multiple players. Changing a display name updates its appearance throughout the leaderboard and history while preserving score ownership and sign-in credentials.
 
 Supabase requires email- or phone-based password identities. The client maps a username to `username@players.golf.invalid`, a reserved, non-deliverable identifier. Users never provide an email address, and email confirmation must remain disabled. Do not add real email addresses or email-based recovery to these identities.
 
@@ -112,11 +112,12 @@ The browser reads game statistics from the checked-in JSON feed, avoiding cross-
 
 | Method | Result |
 | --- | --- |
-| `getLeague()` | `{ config, players, scores, courses, identity }` from `golf_state()` |
+| `getLeague()` | `{ config, players, scores, courses, identity, account }` from `golf_state()` |
 | `registerAccount(username, password)` | Managed Auth signup, or credentials added to the current anonymous player |
 | `signIn(username, password)` | Supabase password session |
 | `signOut()` | Sign out of the current device |
 | `changePassword(currentPassword, password)` | Reauthenticate and update the managed password |
+| `updateDisplayName(name)` | Update the signed-in player's display name |
 | `submitScore({ rawText })` | Server-parsed score from `golf_submit_score()` |
 | `exportData()` | JSON containing calendar, players, and submitted scores; no auth session |
 

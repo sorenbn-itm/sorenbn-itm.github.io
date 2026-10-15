@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSupabaseDatabase } from '../supabase-db.js';
-import { accountEmail, normalizeUsername, validatePassword } from '../accounts.js';
+import { accountEmail, normalizeDisplayName, normalizeUsername, validatePassword } from '../accounts.js';
 
 test('old demo data is removed only after a successful shared database read', async () => {
   const removed = [];
@@ -61,14 +61,38 @@ test('existing browser users gain credentials on the same account, keeping score
   assert.deepEqual(calls, [['update', { email: 'casey@players.golf.invalid', password: 'a long password' }]]);
 });
 
-test('permanent sessions and reserved player names cannot be registered over', async () => {
+test('permanent sessions cannot be registered over', async () => {
   const { client, calls } = authClient({ id: 'original-player', is_anonymous: false });
   const db = createSupabaseDatabase(client, null);
   await assert.rejects(db.registerAccount('Casey', 'a long password'), /Sign out/);
-  client.auth.getSession = async () => ({ data: { session: null } });
-  client.rpc = async () => ({ data: { config: {}, players: [{ id: 'other', name: 'CASEY' }], scores: [] } });
-  await assert.rejects(db.registerAccount('Casey', 'a long password'), { code: 'NAME_TAKEN' });
   assert.deepEqual(calls, []);
+});
+
+test('display names never reserve sign-in usernames', async () => {
+  const { client, calls } = authClient();
+  client.rpc = async () => { throw new Error('Signup must not check display names.'); };
+  await createSupabaseDatabase(client, null).registerAccount('Casey', 'a long password');
+  assert.equal(calls[0][0], 'signup');
+});
+
+test('display names normalize whitespace, support Unicode, and enforce length and control checks', () => {
+  assert.equal(normalizeDisplayName('  Élodie\u00a0  Jensen  '), 'Élodie Jensen');
+  assert.equal(normalizeDisplayName('Ａlice'), 'Alice');
+  assert.equal(normalizeDisplayName('😀'.repeat(24)), '😀'.repeat(24));
+  for (const name of [null, '', '   ', 'x', 'x'.repeat(25), 'Al\u0001ice']) {
+    assert.throws(() => normalizeDisplayName(name));
+  }
+});
+
+test('display-name updates send only the normalized name, with no selectable player ID', async () => {
+  const calls = [];
+  const db = createSupabaseDatabase({ rpc: async (...args) => {
+    calls.push(args); return { data: { id: 'player', name: args[1].p_name } };
+  } }, null);
+  assert.deepEqual(await db.updateDisplayName('  Casey   Rivers '), { id: 'player', name: 'Casey Rivers' });
+  assert.deepEqual(calls, [['golf_update_display_name', { p_name: 'Casey Rivers' }]]);
+  await assert.rejects(db.updateDisplayName('x'));
+  assert.equal(calls.length, 1);
 });
 
 test('confirmation being enabled is reported as a setup problem', async () => {

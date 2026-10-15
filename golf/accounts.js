@@ -11,6 +11,14 @@ export function accountEmail(username) {
   return `${normalizeUsername(username)}@players.golf.invalid`;
 }
 
+export function normalizeDisplayName(value) {
+  const name = typeof value === 'string' ? value.normalize('NFKC').replace(/\s+/gu, ' ').trim() : '';
+  if ([...name].length < 2 || [...name].length > 24 || /\p{Cc}/u.test(name)) {
+    throw new Error('Choose a display name between 2 and 24 characters.');
+  }
+  return name;
+}
+
 export function validatePassword(password) {
   if (typeof password !== 'string' || [...password].length < 8) {
     throw new Error('Use a password of at least 8 characters.');

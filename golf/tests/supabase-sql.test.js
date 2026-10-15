@@ -45,6 +45,9 @@ async function submit(id, text = result()) {
 async function state(id = null) {
   return (await asPlayer(id, 'select public.golf_state() as league')).rows[0].league;
 }
+async function rename(id, name) {
+  return (await asPlayer(id, 'select public.golf_update_display_name($1) as player', [name])).rows[0].player;
+}
 
 test('a new database exposes an empty league with the server calendar', async () => {
   const league = await state();
@@ -107,13 +110,43 @@ test('upgrading an existing browser account preserves player ID, name, and score
   assert.equal((await submit(alice)).playerId, alice);
 });
 
-test('new usernames cannot take a legacy player name and failed signups are atomic', async () => {
+test('display names are independent of unique login usernames', async () => {
   await db.query("insert into public.golf_players(id, name) values ($1, 'Alice')", [alice]);
-  await assert.rejects(register(bob, 'alice'), { code: '23505' });
-  const { rows } = await db.query('select email, is_anonymous from auth.users where id = $1', [bob]);
-  assert.equal(rows[0].email, null);
-  assert.equal(rows[0].is_anonymous, true);
-  assert.equal((await state(bob)).identity, null);
+  assert.equal((await register(bob, 'alice')).name, 'alice');
+  await rename(bob, 'Bob Jensen');
+  await assert.rejects(register(alice, 'alice'), { code: '23505' });
+  assert.equal((await state(alice)).identity.name, 'Alice');
+  assert.deepEqual((await state(bob)).account, { username: 'alice' });
+});
+
+test('players can change display names repeatedly without changing credentials or score ownership', async () => {
+  await register(alice, 'alice_login');
+  await register(bob, 'bob_login');
+  await submit(alice);
+  const before = await state(alice);
+  assert.equal((await rename(alice, '  Élodie   Jensen  ')).name, 'Élodie Jensen');
+  assert.equal((await state(bob)).players.find(player => player.id === alice).name, 'Élodie Jensen');
+  assert.equal((await rename(alice, 'New Name')).name, 'New Name');
+  assert.equal((await state(alice)).identity.id, alice);
+  assert.deepEqual((await state(alice)).account, before.account);
+  assert.deepEqual((await state(alice)).scores, before.scores);
+  assert.equal((await state(bob)).identity.name, 'bob_login');
+  await rename(bob, 'New Name');
+  assert.equal((await state()).players.filter(player => player.name === 'New Name').length, 2);
+  await db.exec(await readFile(new URL('../supabase/setup.sql', import.meta.url), 'utf8'));
+  assert.equal((await state()).players.filter(player => player.name === 'New Name').length, 2);
+});
+
+test('display-name updates reject invalid input, anonymous sessions, and selecting another owner', async () => {
+  await assert.rejects(rename(null, 'Other Name'), { code: '42501' });
+  await db.query("insert into public.golf_players(id, name) values ($1, 'Legacy Player')", [alice]);
+  await assert.rejects(rename(alice, 'Other Name'), { code: '42501' });
+  await register(alice, 'alice_login');
+  for (const name of [null, '', '   ', 'x', 'x'.repeat(25), 'x'.repeat(201), 'Al\u0001ice']) {
+    await assert.rejects(rename(alice, name), { code: '22023' });
+  }
+  await assert.rejects(asPlayer(alice, 'select public.golf_update_display_name($1, $2)', ['Other Name', bob]), { code: '42883' });
+  assert.equal((await state(alice)).identity.name, 'Legacy Player');
 });
 
 test('an account inserted by Auth creates its profile in the same transaction', async () => {

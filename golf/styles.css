@@ -193,6 +193,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 .account-panel small { display: block; color: var(--muted); margin-top: 7px; font-size: 11px; line-height: 1.6; }
 .account-panel .button { width: 100%; margin-top: 14px; }
 .account-panel .form-error { color: var(--error); }
+.dialog form + form { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
 .account-tabs { display: flex; gap: 4px; padding: 4px; background: var(--paper); border-radius: 6px; }
 .account-tabs button { flex: 1; padding: 9px 5px; border-radius: 4px; font-size: 12px; color: var(--muted); }
 .account-tabs button[aria-pressed="true"] { color: var(--ink); background: var(--raised); }

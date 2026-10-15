@@ -361,7 +361,33 @@ $('#player-button').addEventListener('click', () => {
     $('#account-username').focus();
     return;
   }
-  openDialog(`<div class="eyebrow">Your account</div><h2>${escapeHtml(league.identity.name)}</h2><p>Username: <strong>${escapeHtml(league.account.username)}</strong></p><p>Sign in with this username on any browser or device.</p><form id="password-form" class="account-panel"><h3>Change password</h3><input name="username" autocomplete="username" value="${escapeHtml(league.account.username)}" hidden><label for="current-password">Current password</label><input id="current-password" name="current-password" type="password" autocomplete="current-password" required><label for="new-password">New password</label><input id="new-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required><small>At least 8 characters.</small><label for="repeat-password">Confirm new password</label><input id="repeat-password" name="repeat-password" type="password" autocomplete="new-password" minlength="8" required><p id="password-error" class="form-error" role="alert"></p><button class="button button-green" type="submit">Change password</button></form><p class="account-help">Forgot your password? Ask the league administrator.</p><button class="button" id="sign-out" type="button">Sign out</button>`);
+  openDialog(`<div class="eyebrow">Your account</div><h2>${escapeHtml(league.identity.name)}</h2><p>Username: <strong>${escapeHtml(league.account.username)}</strong></p><p>Sign in with this username on any browser or device.</p><form id="display-name-form" class="account-panel"><h3>Display name</h3><label for="display-name">Name shown on the leaderboard</label><input id="display-name" name="display-name" autocomplete="nickname" value="${escapeHtml(league.identity.name)}" maxlength="48" required aria-describedby="display-name-help"><small id="display-name-help">2–24 characters. You can change this whenever you like.</small><p id="display-name-error" class="form-error" role="alert"></p><button class="button button-green" type="submit">Save display name</button></form><form id="password-form" class="account-panel"><h3>Change password</h3><input name="username" autocomplete="username" value="${escapeHtml(league.account.username)}" hidden><label for="current-password">Current password</label><input id="current-password" name="current-password" type="password" autocomplete="current-password" required><label for="new-password">New password</label><input id="new-password" name="new-password" type="password" autocomplete="new-password" minlength="8" required><small>At least 8 characters.</small><label for="repeat-password">Confirm new password</label><input id="repeat-password" name="repeat-password" type="password" autocomplete="new-password" minlength="8" required><p id="password-error" class="form-error" role="alert"></p><button class="button button-green" type="submit">Change password</button></form><p class="account-help">Forgot your password? Ask the league administrator.</p><button class="button" id="sign-out" type="button">Sign out</button>`);
+  $('#display-name-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (accountBusy) return;
+    const form = event.currentTarget;
+    const input = form.querySelector('input');
+    const errorLabel = $('#display-name-error');
+    const controls = $('#dialog-content').querySelectorAll('button, input');
+    errorLabel.textContent = '';
+    accountBusy = true;
+    controls.forEach(control => { control.disabled = true; });
+    form.setAttribute('aria-busy', 'true');
+    try {
+      const player = await database.updateDisplayName(input.value);
+      await refresh();
+      if (form.isConnected) {
+        input.value = player.name;
+        $('#dialog-title').textContent = player.name;
+      }
+      toast('Display name saved.');
+    } catch (error) { errorLabel.textContent = error.message; }
+    finally {
+      accountBusy = false;
+      controls.forEach(control => { control.disabled = false; });
+      form.removeAttribute('aria-busy');
+    }
+  });
   $('#password-form').addEventListener('submit', async event => {
     event.preventDefault();
     if (accountBusy) return;
