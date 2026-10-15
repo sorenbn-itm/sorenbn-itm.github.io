@@ -59,7 +59,7 @@ This data is local to each browser and origin. It is editable through browser de
 
 - Weeks run Monday through Friday in Europe/Copenhagen, including daylight-saving changes. Lowest total wins. Played and assigned scores count toward all due rounds for ranking. During the week, rankings are provisional.
 - Once a day is earlier than the league's current date, every registered player without a submission is assigned the highest submitted score on that map plus one. Today's and future rounds remain pending. If nobody submitted on a day, it stays pending until a submitted score provides a baseline. Weekends are excluded.
-- Assigned scores appear in red with `DNS` (did not compete). Their details show the highest submitted score and the added stroke. Weekly totals show played and assigned round counts separately.
+- Assigned scores appear in red with `DNF` (did not finish). Their details show the highest submitted score and the added stroke. Weekly totals show played and assigned round counts separately.
 - Assignments are calculated from submissions when standings are read, including archived weeks. They are not stored as submissions and have no checkpoints. Multiple absent players receive the same score; assignments never become the baseline for another assignment. Late submissions replace assignments and recalculate any assignments based on the day's highest score.
 - Players with pending due rounds appear below the rankings, ordered by rounds counted, then total. Pending rounds do not count as zero.
 - Equal totals share a place. The archive shows every tied winner and loser. A sole eligible player is the winner and has no loser.
