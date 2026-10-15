@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { before, beforeEach, after, test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { parseScore, standingsForWeek } from '../domain.js';
+import { parseScore, standingsForWeek, awardsForWeek, handicapForPlayer, playerStats, roundStats } from '../domain.js';
 
 const db = new PGlite();
 const alice = '11111111-1111-4111-8111-111111111111';
@@ -19,7 +19,7 @@ before(async () => {
 });
 beforeEach(async () => {
   await db.exec(`reset role; set request.jwt.claim.sub = '';
-    truncate public.golf_scores, public.golf_players, auth.users;
+    truncate public.golf_bonus_scores, public.golf_scores, public.golf_players, auth.users;
     insert into auth.users values ('${alice}'), ('${bob}');
     update public.golf_settings set season_start = '2026-10-12';
     create or replace function golf_private.clock() returns timestamptz language sql stable
@@ -44,6 +44,9 @@ async function submit(id, text = result()) {
 }
 async function state(id = null) {
   return (await asPlayer(id, 'select public.golf_state() as league')).rows[0].league;
+}
+async function submitBonus(id, map = 561, total = 3) {
+  return (await asPlayer(id, 'select public.golf_submit_bonus_score($1, $2) as score', [map, total])).rows[0].score;
 }
 async function rename(id, name) {
   return (await asPlayer(id, 'select public.golf_update_display_name($1) as player', [name])).rows[0].player;
@@ -223,7 +226,69 @@ test('a late submission replaces a derived DNF without allowing an update', asyn
 test('rerunning setup preserves registered players and submitted scores', async () => {
   await register(alice, 'Alice');
   await submit(alice);
+  await submitBonus(alice);
   await db.exec(await readFile(new URL('../supabase/setup.sql', import.meta.url), 'utf8'));
   assert.equal((await state()).players.length, 1);
   assert.equal((await state()).scores.length, 1);
+  assert.equal((await state()).bonusScores.length, 1);
+});
+
+test('bonus scores are independent of league submissions, awards, and personal statistics', async () => {
+  await register(alice, 'Alice');
+  await register(bob, 'Bob');
+  await submit(alice, result(560));
+  await submit(alice);
+  const before = await state(alice);
+  const score = await submitBonus(alice);
+  await submitBonus(bob, 561, 1);
+  const after = await state(alice);
+  assert.equal(score.playerId, alice);
+  assert.equal(score.courseDate, '2026-10-15');
+  assert.equal(after.bonusScores.length, 2);
+  assert.deepEqual(after.scores, before.scores);
+  for (const operation of [league => standingsForWeek(league, '2026-10-12'),
+    league => awardsForWeek(league, '2026-10-12'), league => playerStats(league, alice),
+    league => handicapForPlayer(league, alice, 561), league => roundStats(league, before.scores[0])]) {
+    assert.deepEqual(operation(after), operation(before));
+  }
+  // A bonus submission does not consume the player's daily league submission.
+  await submit(bob);
+  assert.equal((await state()).scores.length, 3);
+});
+
+test('bonus submissions require an account and cannot be forged, changed, or repeated', async () => {
+  await assert.rejects(submitBonus(null), { code: '42501' });
+  await assert.rejects(submitBonus(alice), { code: '42501' });
+  await register(alice, 'Alice');
+  await register(bob, 'Bob');
+  await submitBonus(alice);
+  await assert.rejects(submitBonus(alice, 561, 1), { code: '23505' });
+  await assert.rejects(asPlayer(alice, 'update public.golf_bonus_scores set total = 1'), { code: '42501' });
+  await assert.rejects(asPlayer(alice, 'delete from public.golf_bonus_scores'), { code: '42501' });
+  await assert.rejects(asPlayer(bob, `insert into public.golf_bonus_scores(player_id,map_number,course_date,total)
+    values ($1,561,'2026-10-15',1)`, [alice]), { code: '42501' });
+  assert.equal((await asPlayer(null, 'select * from public.golf_bonus_scores')).rows.length, 1);
+  assert.equal((await state()).bonusScores[0].total, 3);
+});
+
+test('bonus validation allows only the active map and a positive integer shot count', async () => {
+  await register(alice, 'Alice');
+  for (const total of [null, -1, 0, 10001]) await assert.rejects(submitBonus(alice, 561, total), { code: '22023' });
+  await assert.rejects(submitBonus(alice, 561, '1.5'), { code: '22P02' });
+  for (const map of [null, 560, 562, 1000001]) await assert.rejects(submitBonus(alice, map), { code: '22023' });
+  assert.equal((await state()).bonusScores.length, 0);
+  assert.equal((await submitBonus(alice, 561, 10000)).total, 10000);
+});
+
+test('bonus scores reset with the game at 04:00 UTC, including weekends', async () => {
+  await register(alice, 'Alice');
+  await db.exec(`create or replace function golf_private.clock() returns timestamptz language sql stable
+    as $$ select timestamptz '2026-10-17T03:59:59Z' $$;`);
+  assert.equal((await submitBonus(alice, 562)).courseDate, '2026-10-16');
+  await db.exec(`create or replace function golf_private.clock() returns timestamptz language sql stable
+    as $$ select timestamptz '2026-10-17T04:00:00Z' $$;`);
+  assert.equal((await state()).config.acceptingScores, false);
+  await assert.rejects(submitBonus(alice, 562), { code: '22023' });
+  assert.equal((await submitBonus(alice, 563)).courseDate, '2026-10-17');
+  assert.equal((await state()).bonusScores.length, 2);
 });

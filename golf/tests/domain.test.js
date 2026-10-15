@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { exampleScore, leagueConfig } from './fixtures.js';
 import { addDays, awardsForWeek, dateForMap, dateInTimeZone, mapForDate, mondayOf, parseScore,
-  standingsForWeek, weekDates, weekNumber } from '../domain.js';
+  standingsForWeek, weekDates, weekNumber, bonusStandings } from '../domain.js';
 
 test('parses the supplied share format and preserves skipped checkpoints', () => {
   const result = parseScore(exampleScore);
@@ -173,4 +173,19 @@ test('an empty week has no awards and a lone finisher is not also the loser', ()
   const alone = awardsForWeek(leagueFor([[20, 20, 20, 20]]), '2026-10-12');
   assert.equal(alone.winners.length, 1);
   assert.deepEqual(alone.last, []);
+});
+
+test('bonus standings include only today’s participants and use shared competition ranks', () => {
+  const league = leagueFor([[], [], [], []]);
+  league.bonusScores = [
+    { playerId: '3', mapNumber: 560, total: 1 },
+    { playerId: '2', mapNumber: 561, total: 8 },
+    { playerId: '1', mapNumber: 561, total: 3 },
+    { playerId: '0', mapNumber: 561, total: 3 },
+  ];
+  assert.deepEqual(bonusStandings(league, 561).map(row => [row.player.id, row.rank, row.score.total]),
+    [['0', 1, 3], ['1', 1, 3], ['2', 3, 8]]);
+  assert.deepEqual(bonusStandings(league, 562), []);
+  delete league.bonusScores;
+  assert.deepEqual(bonusStandings(league, 561), []);
 });

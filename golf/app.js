@@ -1,6 +1,6 @@
 import { activeMap, leagueConfig } from './config.js';
 import { addDays, awardsForWeek, dateForMap, formatDate, mapForDate, mondayOf, parseScore,
-  standingsForWeek, weekNumber, courseForMap, handicapForPlayer, playerStats, roundStats } from './domain.js';
+  standingsForWeek, weekNumber, courseForMap, handicapForPlayer, playerStats, roundStats, bonusStandings } from './domain.js';
 import { loadCourseData } from './course-data.js';
 import { database, onIdentityChange } from './database.js';
 
@@ -20,6 +20,7 @@ let courseDataError = false;
 let refreshInProgress;
 let accountMode = 'login';
 let accountBusy = false;
+let selectedTab = 'weekly';
 const signed = number => number > 0 ? `+${number}` : number === 0 ? 'Even' : String(number);
 const globalGroup = value => value < 1 ? 'top <1%' : `top ${Math.round(value)}%`;
 const stat = (label, value, detail = '') => `<div class="stat"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</div>`;
@@ -102,15 +103,60 @@ function renderIdentity() {
     ? `Create a login for ${player.name}. Your name and scores will stay with this account.`
     : 'Use your account on any browser or device.';
   setAccountMode(upgrading ? 'register' : accountMode);
-  const todayScore = submittedScore(activeMap(league.config));
-  const available = league.config.acceptingScores;
-  $('#score-form').hidden = !signedIn || Boolean(todayScore) || !available;
+  const bonus = selectedTab === 'bonus';
+  const map = activeMap(league.config);
+  const todayScore = bonus ? league.bonusScores?.find(score => score.playerId === player?.id && score.mapNumber === map)
+    : submittedScore(map);
+  const available = bonus ? Boolean(league.bonusScores) && league.config.activeCourseDate >= league.config.seasonStart
+    : league.config.acceptingScores;
+  if ($('#bonus-form').dataset.map !== String(map) || $('#bonus-form').dataset.player !== (player?.id ?? '')) {
+    $('#bonus-form').reset();
+    $('#bonus-error').textContent = '';
+    $('#bonus-form').dataset.map = String(map);
+    $('#bonus-form').dataset.player = player?.id ?? '';
+  }
+  $('#score-form').hidden = bonus || !signedIn || Boolean(todayScore) || !available;
+  $('#bonus-form').hidden = !bonus || !signedIn || Boolean(todayScore) || !available;
   $('#submission-intro').hidden = !signedIn || Boolean(todayScore) || !available;
-  $('#submit-title').textContent = !signedIn ? 'Your account' : todayScore ? 'Score submitted' : available ? 'Submit score' : 'No weekday map';
+  $('#submission-intro').textContent = bonus ? 'Played the bonus level? Add your shot count.' : 'Paste the result copied from the game.';
+  $('#submit-title').textContent = !signedIn ? 'Your account' : todayScore ? (bonus ? 'Bonus score submitted' : 'Score submitted')
+    : available ? (bonus ? 'Submit bonus score' : 'Submit score') : bonus ? 'Bonus entry unavailable' : 'No weekday map';
   $('#submission-status').hidden = !signedIn || !todayScore;
   $('#submission-status').textContent = todayScore ? `${todayScore.total} shots · Map #${todayScore.mapNumber}` : '';
-  $('.submission-footnote').textContent = !signedIn ? 'The leaderboard is public. Sign in to submit scores.' : todayScore ? 'You can submit when the next weekday map opens.'
+  $('.submission-footnote').textContent = !signedIn ? 'The leaderboard is public. Sign in to submit scores.' : bonus
+    ? todayScore ? 'Come back for the next daily bonus level.' : available ? 'One optional bonus score per day. Resets at 04:00 UTC.' : 'Bonus score entry is not available yet.'
+    : todayScore ? 'You can submit when the next weekday map opens.'
     : available ? 'One submission per map. Scores are final.' : 'Score entry opens with the next weekday map.';
+}
+
+function renderBonus() {
+  const map = activeMap(league.config);
+  const rows = bonusStandings(league, map);
+  $('#bonus-map-label').textContent = `Bonus · Map #${map}`;
+  $('#bonus-player-count').textContent = `${rows.length} ${rows.length === 1 ? 'player' : 'players'}`;
+  $('#bonus-body').innerHTML = rows.map(({ player, score, rank }) => {
+    const own = player.id === league.identity?.id;
+    return `<tr class="${own ? 'own-row' : ''}"><td>${rank}</td><td><span class="player-name">${escapeHtml(player.name)}${own ? '<small>you</small>' : ''}</span></td><td class="score-total">${score.total}</td></tr>`;
+  }).join('') || `<tr><td colspan="3" class="empty-message">${league.bonusScores ? 'No bonus scores yet today.' : 'The bonus leaderboard is being set up.'}</td></tr>`;
+}
+
+function setTab(tab, focus = false) {
+  if (saving || accountBusy) return;
+  selectedTab = tab;
+  const bonus = tab === 'bonus';
+  for (const name of ['weekly', 'bonus']) {
+    const button = $(`#${name}-tab`);
+    button.setAttribute('aria-selected', String(name === tab));
+    button.tabIndex = name === tab ? 0 : -1;
+  }
+  $('#leaderboard').hidden = bonus;
+  $('#bonus-leaderboard').hidden = !bonus;
+  $('#archive').hidden = bonus;
+  $('#page-title').textContent = bonus ? 'Daily bonus leaderboard' : 'Weekly leaderboard';
+  $('#page-subtitle').textContent = bonus ? 'An optional daily challenge · Fewest shots first' : 'Monday–Friday · Copenhagen time';
+  $('#course-par').hidden = bonus;
+  if (league) renderIdentity();
+  if (focus) $(`#${tab}-tab`).focus();
 }
 
 function setAccountMode(mode) {
@@ -176,6 +222,7 @@ function render() {
   renderScorecard();
   renderArchive();
   renderPlayerStats();
+  renderBonus();
   $('#course-date').textContent = formatDate(league.config.activeCourseDate, { weekday: 'short', day: 'numeric', month: 'short' });
   $('#course-number').textContent = `Daily map #${activeMap(league.config)}`;
   $('#course-par').textContent = courseNote(courseForMap(league, activeMap(league.config)));
@@ -210,6 +257,7 @@ async function refreshLeague() {
 function setWeek(start, scroll = false) {
   if (!league || start < firstStart || start > currentStart) return;
   selectedStart = start;
+  setTab('weekly');
   renderScorecard();
   if (scroll) $('#leaderboard').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
 }
@@ -291,6 +339,7 @@ $('#account-form').addEventListener('submit', async event => {
     $('#account-form').reset();
     toast(creating ? 'Account created. You’re signed in.' : `Signed in as ${league.identity.name}.`);
     if (!$('#score-form').hidden) $('#score-text').focus();
+    else if (!$('#bonus-form').hidden) $('#bonus-total').focus();
     else $('#player-button').focus();
   } catch (error) { $('#account-error').textContent = error.message; }
   finally {
@@ -320,6 +369,40 @@ $('#score-form').addEventListener('submit', async event => {
 });
 
 $('#score-text').addEventListener('input', clearPreview);
+$('#bonus-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!league || saving || !league.account || !league.identity) return;
+  saving = true;
+  $('#bonus-submit').disabled = true;
+  $('#bonus-error').textContent = '';
+  try {
+    const saved = await database.submitBonusScore({ mapNumber: Number($('#bonus-form').dataset.map), total: Number($('#bonus-total').value) });
+    $('#bonus-form').reset();
+    await refresh();
+    $('#submission-status').focus();
+    toast(`Bonus submitted: ${saved.total} shots on map #${saved.mapNumber}.`);
+  } catch (error) {
+    if (error.code === 'SCORE_EXISTS') await refresh().catch(showConnectionError);
+    $('#bonus-error').textContent = error.message;
+    if ($('#bonus-form').hidden) toast(error.message);
+  } finally {
+    saving = false;
+    $('#bonus-submit').disabled = false;
+  }
+});
+$('#bonus-total').addEventListener('input', () => { $('#bonus-error').textContent = ''; });
+for (const name of ['weekly', 'bonus']) {
+  $(`#${name}-tab`).addEventListener('click', () => setTab(name));
+  $(`#${name}-tab`).addEventListener('keydown', event => {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      setTab(event.key === 'Home' ? 'weekly' : event.key === 'End' ? 'bonus' : name === 'weekly' ? 'bonus' : 'weekly', true);
+    }
+  });
+}
+document.querySelectorAll('a[href="#leaderboard"], a[href="#archive"]').forEach(link => {
+  link.addEventListener('click', () => setTab('weekly'));
+});
 $('#previous-week').addEventListener('click', () => setWeek(addDays(selectedStart, -7)));
 $('#next-week').addEventListener('click', () => setWeek(addDays(selectedStart, 7)));
 $('#current-week').addEventListener('click', () => setWeek(currentStart));

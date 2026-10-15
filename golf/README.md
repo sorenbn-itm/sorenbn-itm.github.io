@@ -35,6 +35,10 @@ There is no seed data. A successful shared database read removes the old browser
 
 The form disappears after the active map's score is submitted and stays hidden after reload. The page refreshes shared standings on focus, after writes, after identity changes, and once per minute while visible. It updates the active week and score-entry state as the server date or game map changes.
 
+The Weekly league tab opens on every visit. The Daily bonus tab shows a separate leaderboard for the active map, ranked by fewest shots with shared places for ties. Players can optionally enter one integer shot count per game day, including weekends, without first submitting a league score. Bonus entry closes when the next map opens at 04:00 UTC; past bonus levels cannot be submitted. Skipped bonus days have no assigned scores. Bonus submissions do not enter weekly totals, awards, handicaps, or player statistics.
+
+Run the updated `supabase/setup.sql` before deploying the bonus tab. It adds `golf_bonus_scores` and the `golf_submit_bonus_score` function while preserving existing data. Until setup is applied, the app keeps league entry available and marks bonus entry unavailable.
+
 The public leaderboard exposes player display names and scores. Only a registered password account can submit for its own player. Player profiles are created by an Auth trigger; display names are updated through an ownership-checked database function. Direct API inserts, updates, and deletes are denied. Unique constraints enforce account identifiers and player/map pairs. Browser checks provide feedback; the database independently checks the account, parses the raw result, and validates totals, checkpoint lines, dates, and ownership.
 
 The API currently returns all submitted league history in one snapshot, preserving the last-20-round handicap calculation. This is intended for a small office league. Test the table and function permissions after changing the schema. The local SQL checks run the setup in an isolated PostgreSQL WASM runtime with Supabase's roles and identity function represented locally; they do not create players or scores in the live project.
@@ -119,7 +123,8 @@ The browser reads game statistics from the checked-in JSON feed, avoiding cross-
 | `changePassword(currentPassword, password)` | Reauthenticate and update the managed password |
 | `updateDisplayName(name)` | Update the signed-in player's display name |
 | `submitScore({ rawText })` | Server-parsed score from `golf_submit_score()` |
-| `exportData()` | JSON containing calendar, players, and submitted scores; no auth session |
+| `submitBonusScore({ mapNumber, total })` | Current daily bonus shot count from `golf_submit_bonus_score()` |
+| `exportData()` | JSON containing calendar, players, league scores, and separate bonus scores; no auth session |
 
 `league.scores` contains actual submissions only. `standingsForWeek()` derives DNF scores with `assigned: true` and `highestTotal`, keeping assignments out of submission uniqueness checks and personal statistics. Courses come from the validated checked-in feed. Dates and active-map eligibility come from the database.
 

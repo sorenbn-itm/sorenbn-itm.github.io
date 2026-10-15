@@ -64,6 +64,22 @@ create table if not exists public.golf_scores (
 );
 create index if not exists golf_scores_map_index on public.golf_scores (map_number);
 
+create table if not exists public.golf_bonus_scores (
+  player_id uuid not null references public.golf_players(id),
+  map_number integer not null check (map_number between 1 and 1000000),
+  course_date date not null,
+  total integer not null check (total between 1 and 10000),
+  submitted_at timestamptz not null default current_timestamp,
+  primary key (player_id, map_number),
+  unique (player_id, course_date)
+);
+create index if not exists golf_bonus_scores_map_index on public.golf_bonus_scores (map_number);
+alter table public.golf_bonus_scores enable row level security;
+revoke all on public.golf_bonus_scores from public, anon, authenticated;
+grant select on public.golf_bonus_scores to anon, authenticated;
+drop policy if exists golf_bonus_scores_read on public.golf_bonus_scores;
+create policy golf_bonus_scores_read on public.golf_bonus_scores for select to anon, authenticated using (true);
+
 alter table public.golf_settings enable row level security;
 alter table public.golf_players enable row level security;
 alter table public.golf_scores enable row level security;
@@ -159,6 +175,7 @@ declare
   v_active date;
   v_players jsonb;
   v_scores jsonb;
+  v_bonus_scores jsonb;
   v_identity jsonb;
   v_username text := golf_private.account_username(auth.uid());
 begin
@@ -172,7 +189,10 @@ begin
     'courseDate', course_date, 'total', total, 'checkpoints', checkpoints,
     'rawText', raw_text, 'submittedAt', submitted_at) order by course_date, player_id), '[]'::jsonb)
     into v_scores from public.golf_scores;
-  return jsonb_build_object('players', v_players, 'scores', v_scores, 'courses', '[]'::jsonb,
+  select coalesce(jsonb_agg(jsonb_build_object('playerId', player_id, 'mapNumber', map_number,
+    'courseDate', course_date, 'total', total, 'submittedAt', submitted_at)
+    order by course_date, player_id), '[]'::jsonb) into v_bonus_scores from public.golf_bonus_scores;
+  return jsonb_build_object('players', v_players, 'scores', v_scores, 'bonusScores', v_bonus_scores, 'courses', '[]'::jsonb,
     'identity', v_identity, 'account', case when v_username is not null then jsonb_build_object('username', v_username) else null end,
     'config', jsonb_build_object('name', 'Kinda Hard Golf scores',
       'timeZone', 'Europe/Copenhagen', 'today', v_today, 'weekdays', jsonb_build_array(1,2,3,4,5),
@@ -237,6 +257,38 @@ exception when unique_violation then
 end;
 $$;
 
+create or replace function public.golf_submit_bonus_score(p_map_number integer, p_total integer)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare
+  v_id uuid := auth.uid();
+  v_settings public.golf_settings;
+  v_active date;
+  v_map integer;
+  v_score public.golf_bonus_scores;
+begin
+  if golf_private.account_username(v_id) is null or not exists(select 1 from public.golf_players where id = v_id) then
+    raise exception 'Sign in with a username and password before submitting a score.' using errcode = '42501';
+  end if;
+  select * into strict v_settings from public.golf_settings where singleton;
+  v_active := ((golf_private.clock() at time zone 'UTC') - make_interval(hours => v_settings.reset_hour_utc))::date;
+  v_map := v_active - v_settings.anchor_date + v_settings.anchor_map;
+  if p_map_number is null or p_map_number <> v_map or v_active < v_settings.season_start then
+    raise exception 'Submit only the current daily bonus level. Reload if the daily map has changed.' using errcode = '22023';
+  end if;
+  if p_total is null or p_total not between 1 and 10000 then
+    raise exception 'Enter a whole number of shots between 1 and 10000.' using errcode = '22023';
+  end if;
+  insert into public.golf_bonus_scores(player_id, map_number, course_date, total, submitted_at)
+    values(v_id, v_map, v_active, p_total, golf_private.clock()) returning * into v_score;
+  return jsonb_build_object('playerId', v_id, 'mapNumber', v_map, 'courseDate', v_active,
+    'total', p_total, 'submittedAt', v_score.submitted_at);
+exception when unique_violation then
+  raise exception 'You already submitted a bonus score for this map. Scores are final.' using errcode = '23505';
+end;
+$$;
+
+revoke all on function public.golf_submit_bonus_score(integer, integer) from public, anon, authenticated;
+grant execute on function public.golf_submit_bonus_score(integer, integer) to authenticated;
 revoke all on all functions in schema golf_private from public, anon, authenticated;
 revoke all on function public.golf_state(), public.golf_submit_score(text), public.golf_update_display_name(text) from public, anon, authenticated;
 grant execute on function public.golf_state() to anon, authenticated;

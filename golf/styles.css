@@ -197,6 +197,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 .account-tabs { display: flex; gap: 4px; padding: 4px; background: var(--paper); border-radius: 6px; }
 .account-tabs button { flex: 1; padding: 9px 5px; border-radius: 4px; font-size: 12px; color: var(--muted); }
 .account-tabs button[aria-pressed="true"] { color: var(--ink); background: var(--raised); }
+.leaderboard-tabs { display: flex; gap: 6px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+.leaderboard-tabs button { padding: 12px 18px; color: var(--muted); border-bottom: 2px solid transparent; font-size: 13px; }
+.leaderboard-tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.bonus-table { min-width: 320px; }
+.bonus-table th:nth-child(2) { width: auto; }
+#bonus-map-label { font-size: 13px; }
+#bonus-player-count { color: var(--muted); font-size: 12px; }
 .dialog-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dialog-stats .stat dd { font-size: 20px; }
 select:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }

@@ -184,3 +184,18 @@ export function playerStats(league, playerId) {
     best: rounds.length ? Math.min(...rounds.map(score => score.total)) : null,
   };
 }
+
+export function bonusStandings(league, mapNumber) {
+  const rows = (league.bonusScores ?? []).filter(score => score.mapNumber === mapNumber)
+    .map(score => ({ score, player: league.players.find(player => player.id === score.playerId) }))
+    .filter(row => row.player)
+    .sort((a, b) => a.score.total - b.score.total || a.player.name.localeCompare(b.player.name));
+  let lastTotal;
+  let lastRank;
+  return rows.map((row, index) => {
+    const rank = row.score.total === lastTotal ? lastRank : index + 1;
+    lastTotal = row.score.total;
+    lastRank = rank;
+    return { ...row, rank };
+  });
+}

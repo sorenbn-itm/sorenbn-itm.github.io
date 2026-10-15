@@ -31,11 +31,16 @@
     </header>
     <main class="container" id="main-content">
       <div class="page-heading">
-        <div><h1>Weekly leaderboard</h1><p>Monday–Friday <span class="separator">·</span> Copenhagen time</p></div>
+        <div><h1 id="page-title">Weekly leaderboard</h1><p id="page-subtitle">Monday–Friday <span class="separator">·</span> Copenhagen time</p></div>
         <div class="today-info"><span id="course-date"></span><strong id="course-number"></strong><span class="course-par" id="course-par"></span><a class="text-link" href="https://kindahard.golf/" target="_blank" rel="noopener noreferrer">Play the game ↗</a></div>
       </div>
+      <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboards">
+        <button type="button" id="weekly-tab" role="tab" aria-selected="true" aria-controls="leaderboard">Weekly league</button>
+        <button type="button" id="bonus-tab" role="tab" aria-selected="false" aria-controls="bonus-leaderboard" tabindex="-1">Daily bonus</button>
+      </div>
       <div class="dashboard">
-        <section class="leaderboard-section" id="leaderboard" aria-labelledby="leaderboard-title">
+        <div>
+        <section class="leaderboard-section" id="leaderboard" role="tabpanel" tabindex="0" aria-labelledby="weekly-tab">
           <div class="section-heading"><h2 id="leaderboard-title">Scores</h2><span class="live-badge"><span class="status-dot"></span><span id="week-status">In progress</span></span></div>
           <div class="scorecard">
             <div class="week-toolbar">
@@ -53,6 +58,17 @@
             <p class="rules-note">Handicap: average shots over par across the last 20 earlier rounds, available after 3 rounds. <button class="small-link" id="handicap-button">How it works</button></p>
           </section>
         </section>
+        <section id="bonus-leaderboard" role="tabpanel" tabindex="0" aria-labelledby="bonus-tab" hidden>
+          <div class="section-heading"><h2>Daily bonus leaderboard</h2><span class="live-badge">Optional</span></div>
+          <div class="scorecard">
+            <div class="week-toolbar"><strong id="bonus-map-label"></strong><span id="bonus-player-count"></span></div>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Daily bonus scores">
+              <table class="bonus-table"><caption class="sr-only">Daily bonus scores. Fewest shots first; ties share a place.</caption><thead><tr><th scope="col">#</th><th scope="col">PLAYER</th><th scope="col">SHOTS</th></tr></thead><tbody id="bonus-body"></tbody></table>
+            </div>
+          </div>
+          <p class="rules-note">Just for fun. Bonus scores do not affect weekly totals, winners, losers, or player stats. No score is assigned if you skip a day.</p>
+        </section>
+        </div>
         <aside class="submission-card" id="submit" aria-labelledby="submit-title">
           <h2 id="submit-title">Submit score</h2>
           <p id="submission-intro">Paste the result copied from the game.</p>
@@ -87,6 +103,13 @@
             <p class="form-error" id="score-error" role="alert"></p>
             <div id="score-preview" hidden></div>
             <button type="submit" class="button button-green submit-button" id="submit-button">Preview score <span aria-hidden="true">↗</span></button>
+          </form>
+          <form id="bonus-form" hidden>
+            <label for="bonus-total">Bonus shots</label>
+            <input id="bonus-total" name="bonus-total" type="number" min="1" max="10000" step="1" inputmode="numeric" required aria-describedby="bonus-help bonus-error">
+            <p id="bonus-help" class="rules-note">Enter your shot count for today’s bonus level. Scores are final.</p>
+            <p class="form-error" id="bonus-error" role="alert"></p>
+            <button type="submit" class="button button-green submit-button" id="bonus-submit">Submit bonus score <span aria-hidden="true">↗</span></button>
           </form>
           <p class="submission-footnote">One submission per map. Scores are final.</p>
         </aside>

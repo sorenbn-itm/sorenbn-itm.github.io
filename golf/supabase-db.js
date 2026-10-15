@@ -105,10 +105,21 @@ export function createSupabaseDatabase(client, storage = globalThis.localStorage
       return rpc('golf_submit_score', { p_raw_text: parsed.rawText }, 'score');
     },
 
+    async submitBonusScore({ mapNumber, total }) {
+      if (!Number.isSafeInteger(total) || total < 1 || total > 10000) {
+        throw new LeagueError('Enter a whole number of shots between 1 and 10000.');
+      }
+      if (!Number.isSafeInteger(mapNumber) || mapNumber < 1 || mapNumber > 1000000) {
+        throw new LeagueError('Reload to get the current bonus level.');
+      }
+      return rpc('golf_submit_bonus_score', { p_map_number: mapNumber, p_total: total }, 'score');
+    },
+
     async exportData() {
       const league = await this.getLeague();
       return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(),
-        config: league.config, players: league.players, scores: league.scores }, null, 2);
+        config: league.config, players: league.players, scores: league.scores,
+        bonusScores: league.bonusScores ?? [] }, null, 2);
     },
   };
 }

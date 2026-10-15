@@ -138,7 +138,7 @@ test('exports exclude account identifiers and authentication data', async () => 
     account: { username: 'casey', email: 'casey@players.golf.invalid' }, identity: { id: 'player' },
   } });
   const exported = JSON.parse(await createSupabaseDatabase(client, null).exportData());
-  assert.deepEqual(Object.keys(exported), ['version', 'exportedAt', 'config', 'players', 'scores']);
+  assert.deepEqual(Object.keys(exported), ['version', 'exportedAt', 'config', 'players', 'scores', 'bonusScores']);
 });
 
 test('duplicate writes become a final-score error with no retry or upsert', async () => {
@@ -148,4 +148,18 @@ test('duplicate writes become a final-score error with no retry or upsert', asyn
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], 'golf_submit_score');
   assert.deepEqual(Object.keys(calls[0][1]), ['p_raw_text']);
+});
+
+test('bonus submissions use a separate RPC with an explicit map and integer total', async () => {
+  const calls = [];
+  const db = createSupabaseDatabase({ rpc: async (...args) => {
+    calls.push(args); return { data: { total: 4 } };
+  } }, null);
+  assert.deepEqual(await db.submitBonusScore({ mapNumber: 561, total: 4 }), { total: 4 });
+  assert.deepEqual(calls, [['golf_submit_bonus_score', { p_map_number: 561, p_total: 4 }]]);
+  for (const total of [null, '', '3', 0, -1, 1.5, 10001, NaN, Infinity]) {
+    await assert.rejects(db.submitBonusScore({ mapNumber: 561, total }));
+  }
+  await assert.rejects(db.submitBonusScore({ mapNumber: null, total: 3 }));
+  assert.equal(calls.length, 1);
 });
