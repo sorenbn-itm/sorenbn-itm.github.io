@@ -1,6 +1,7 @@
 import { exampleScore, leagueConfig } from './config.js';
 import { addDays, awardsForWeek, dateForMap, formatDate, mapForDate, mondayOf, parseScore,
-  standingsForWeek, weekNumber } from './domain.js';
+  standingsForWeek, weekNumber, courseForMap, handicapForPlayer, playerStats, roundStats } from './domain.js';
+import { loadCourseData } from './course-data.js';
 import { database, STORAGE_KEY } from './mock-db.js';
 
 const $ = selector => document.querySelector(selector);
@@ -14,6 +15,33 @@ let league;
 let preview = null;
 let saving = false;
 let toastTimeout;
+let statsPlayerId;
+let courseDataError = false;
+const signed = number => number > 0 ? `+${number}` : number === 0 ? 'Even' : String(number);
+const globalGroup = value => value < 1 ? 'top <1%' : `top ${Math.round(value)}%`;
+const stat = (label, value, detail = '') => `<div class="stat"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</div>`;
+
+function courseNote(course) {
+  if (!course) return courseDataError ? 'Game stats unavailable · retry by reloading' : 'Game stats not collected for this map';
+  if (course.source === 'sample') return `Sample par ${course.par}${courseDataError ? ' · game stats unavailable' : ''}`;
+  const collected = new Intl.DateTimeFormat('en-GB', { timeZone: league.config.timeZone,
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(course.fetchedAt));
+  return `Par ${course.par} · collected ${collected} Copenhagen time`;
+}
+
+function renderPlayerStats() {
+  const select = $('#stats-player');
+  if (!league.players.some(player => player.id === statsPlayerId)) statsPlayerId = league.identity?.id ?? league.players[0]?.id;
+  select.innerHTML = league.players.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join('');
+  select.value = statsPlayerId ?? '';
+  const map = mapForDate(league.config.today, league.config);
+  const history = handicapForPlayer(league, statsPlayerId, map);
+  const overall = playerStats(league, statsPlayerId);
+  const today = league.scores.find(score => score.playerId === statsPlayerId && score.mapNumber === map);
+  const result = today ? roundStats(league, today) : null;
+  const course = courseForMap(league, map);
+  $('#player-stats').innerHTML = `<dl class="stats-grid">${stat('Handicap', history.handicap === null ? '–' : signed(history.handicap), history.handicap === null ? `${history.rounds}/3 rounds with par` : `${history.rounds} earlier rounds`)}${stat('Today’s target', history.expected ?? '–', history.expected === null ? 'Needs a handicap and daily par' : `Par ${course.par} + handicap, rounded`)}${stat('League group today', result ? `Top ${result.topPercent}%` : '–', result ? `Place ${result.rank} of ${result.players} · ties included` : 'Submit today’s score')}${stat('Rounds played', overall.rounds)}${stat('Average shots', overall.average === null ? '–' : overall.average.toFixed(1), 'All submitted rounds')}${stat('Best score', overall.best ?? '–', 'Shots on a single map')}</dl><p class="stats-note">${escapeHtml(courseNote(course))}${result?.versusExpected !== null && result?.versusExpected !== undefined ? `<br>Today: ${escapeHtml(signed(result.versusExpected))} shots against target.` : ''}${course?.source === 'game' ? `<br>Game average ${course.averageScore.toFixed(1)} shots · ${course.percentFinished}% finished · ${course.minScore}–${course.maxScore} shots.` : ''}${result?.global ? `<br>Global: ${globalGroup(result.global.first)} of first daily runs · ${globalGroup(result.global.repeat)} of repeat runs.` : '<br>Global percentile: not collected for this score.'}</p>`;
+}
 
 function applyTheme(theme) {
   const dark = theme !== 'light';
@@ -81,26 +109,27 @@ function renderScorecard() {
   $('#previous-week').disabled = selectedStart <= firstStart;
   $('#next-week').disabled = isCurrent;
   $('#current-week').disabled = isCurrent;
-  $('#table-caption').textContent = `Scores for ${rangeLabel(selectedStart)}. Fewer shots is better. Select a score to see its checkpoints.`;
+  $('#table-caption').textContent = `Scores for ${rangeLabel(selectedStart)}. Fewer shots is better. DNS means did not compete; assigned scores count toward weekly totals. Select a score for details.`;
   $('#score-head').innerHTML = `<tr><th scope="col"><span class="sr-only">Place</span>#</th><th scope="col">PLAYER</th>${dates.map((date, index) =>
-    `<th scope="col" class="${date === league.config.today ? 'today' : ''}">${formatDate(date, { weekday: 'short' }).toUpperCase()}<small title="Map #${maps[index]}">${formatDate(date, { day: 'numeric', month: 'short' })}</small></th>`).join('')}<th scope="col">TOTAL</th></tr>`;
+    `<th scope="col" class="${date === league.config.today ? 'today' : ''}">${formatDate(date, { weekday: 'short' }).toUpperCase()}<small title="Map #${maps[index]}">${formatDate(date, { day: 'numeric', month: 'short' })}</small><small>${courseForMap(league, maps[index]) ? `${courseForMap(league, maps[index]).source === 'sample' ? 'Sample ' : ''}Par ${courseForMap(league, maps[index]).par}` : 'Par –'}</small></th>`).join('')}<th scope="col">TOTAL</th></tr>`;
   $('#score-body').innerHTML = rows.map(row => {
     const own = row.player.id === league.identity?.id;
     return `<tr class="${own ? 'own-row' : ''}"><td>${row.rank === 1 ? '<span class="rank-leader" aria-label="First place">1</span>' : row.rank ?? '–'}</td><td><div class="player-cell"><span class="player-name" title="${escapeHtml(row.player.name)}">${escapeHtml(row.player.name)}${own ? '<small>you</small>' : ''}</span></div></td>${maps.map((map, index) => {
       const score = row.rounds.find(round => round.mapNumber === map);
       if (!score) return `<td><span class="score-empty" aria-label="${dates[index] > league.config.today ? 'Upcoming map' : 'No score submitted'}">${dates[index] > league.config.today ? '·' : '–'}</span></td>`;
+      if (score.assigned) return `<td><button class="score-button assigned-score" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots assigned. Did not compete. View calculation.">${score.total}<small>DNS</small></button></td>`;
       const best = score.total === bestByMap[map];
       return `<td><button class="score-button ${best ? 'best-score' : ''}" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots${best ? ', daily best' : ''}. View checkpoints.">${score.total}</button></td>`;
-    }).join('')}<td class="score-total">${row.rounds.length ? row.total : '–'}<small>${row.rounds.length}/${dates.length} rounds</small></td></tr>`;
+    }).join('')}<td class="score-total">${row.rounds.length ? row.total : '–'}<small>${row.rounds.filter(round => !round.assigned).length}/${dates.length} played${row.rounds.some(round => round.assigned) ? `<br>${row.rounds.filter(round => round.assigned).length} assigned` : ''}</small></td></tr>`;
   }).join('') || '<tr><td colspan="8" class="empty-message">No scores submitted.</td></tr>';
-  $('#completion-note').textContent = `${rows.filter(row => row.rounds.length).length} players · ${dueDates.length} of ${dates.length} days ${isCurrent ? 'played' : 'complete'}`;
+  $('#completion-note').textContent = `${rows.filter(row => row.rounds.length).length} players · ${dueDates.length} of ${dates.length} days due`;
   const complete = rows.filter(row => row.complete);
   const leaders = complete.filter(row => row.rank === 1);
   const leaderLabel = isCurrent ? 'Leader' : 'Winner';
   const leaderNames = leaders.length ? leaders.map(row => row.player.name).join(' & ') : 'No eligible player';
   const leaderDetail = leaders.length ? `${leaders[0].total} shots${leaders.length > 1 ? ' · tied' : ''}` : 'Complete all due rounds';
-  const lowest = Math.min(...rows.flatMap(row => row.rounds.map(round => round.total)));
-  const bestRounds = rows.flatMap(row => row.rounds.filter(round => round.total === lowest).map(round => ({ ...round, name: row.player.name })));
+  const lowest = Math.min(...rows.flatMap(row => row.rounds.filter(round => !round.assigned).map(round => round.total)));
+  const bestRounds = rows.flatMap(row => row.rounds.filter(round => !round.assigned && round.total === lowest).map(round => ({ ...round, name: row.player.name })));
   const bestNames = [...new Set(bestRounds.map(round => round.name))];
   $('#week-insights').innerHTML = `<div class="insight"><span class="insight-symbol" aria-hidden="true">1</span><div><div class="eyebrow">${leaderLabel}</div><strong>${escapeHtml(leaderNames)}<small>${escapeHtml(leaderDetail)}</small></strong></div></div><div class="insight"><span class="insight-symbol" aria-hidden="true">⚑</span><div><div class="eyebrow">Best daily score</div><strong>${escapeHtml(bestNames.join(' & ') || 'No scores')}<small>${bestRounds.length ? `${lowest} shots` : '–'}</small></strong></div></div>`;
 }
@@ -118,13 +147,22 @@ function render() {
   renderIdentity();
   renderScorecard();
   renderArchive();
+  renderPlayerStats();
   $('#course-date').textContent = formatDate(league.config.today, { weekday: 'short', day: 'numeric', month: 'short' });
   $('#course-number').textContent = `Daily map #${mapForDate(league.config.today, league.config)}`;
+  $('#course-par').textContent = courseNote(courseForMap(league, mapForDate(league.config.today, league.config)));
   if (preview) showPreview(preview);
 }
 
 async function refresh() {
-  league = await database.getLeague();
+  const saved = await database.getLeague();
+  try {
+    league = await loadCourseData(saved);
+    courseDataError = false;
+  } catch {
+    league = saved;
+    courseDataError = true;
+  }
   render();
 }
 
@@ -148,9 +186,11 @@ function showPreview(parsed) {
   const date = dateForMap(parsed.mapNumber, league.config);
   const existing = submittedScore(parsed.mapNumber);
   const skipped = parsed.checkpoints.filter(checkpoint => checkpoint.shots === null).length;
+  const course = courseForMap(league, parsed.mapNumber);
+  const history = handicapForPlayer(league, league.identity?.id, parsed.mapNumber);
   $('#score-preview').className = 'score-preview';
   $('#score-preview').hidden = false;
-  $('#score-preview').innerHTML = `<div><span>Map #${parsed.mapNumber}</span><strong>${parsed.total}<span class="sr-only"> shots</span></strong></div><p>${formatDate(date, { weekday: 'short', day: 'numeric', month: 'short' })} · ${parsed.checkpoints.length} checkpoints${skipped ? ` · ${skipped} skipped` : ''}${existing ? `<br>You already saved ${existing.total} shots for this map.` : ''}</p>`;
+  $('#score-preview').innerHTML = `<div><span>Map #${parsed.mapNumber}</span><strong>${parsed.total}<span class="sr-only"> shots</span></strong></div><p>${formatDate(date, { weekday: 'short', day: 'numeric', month: 'short' })} · ${parsed.checkpoints.length} checkpoints${skipped ? ` · ${skipped} skipped` : ''}${course ? `<br>${escapeHtml(courseNote(course))} · ${signed(parsed.total - course.par)} shots` : ''}${history.expected !== null ? `<br>Target ${history.expected} · ${signed(parsed.total - history.expected)} shots against target` : ''}${existing ? `<br>You already saved ${existing.total} shots for this map.` : ''}</p>`;
   $('#submit-button').disabled = Boolean(existing) || saving;
   $('#submit-button').innerHTML = existing ? 'Already submitted' : 'Submit score <span aria-hidden="true">↗</span>';
   $('#score-error').textContent = existing ? 'You already submitted a score for this map. Scores are final.' : '';
@@ -188,6 +228,7 @@ $('#name-form').addEventListener('submit', async event => {
   $('#name-error').textContent = '';
   try {
     const player = await database.registerPlayer($('#player-name').value);
+    statsPlayerId = player.id;
     await refresh();
     toast(`Name saved: ${player.name}.`);
     $('#score-text').focus();
@@ -221,6 +262,13 @@ $('#example-button').addEventListener('click', () => {
 $('#previous-week').addEventListener('click', () => setWeek(addDays(selectedStart, -7)));
 $('#next-week').addEventListener('click', () => setWeek(addDays(selectedStart, 7)));
 $('#current-week').addEventListener('click', () => setWeek(currentStart));
+$('#stats-player').addEventListener('change', event => {
+  statsPlayerId = event.target.value;
+  renderPlayerStats();
+});
+$('#handicap-button').addEventListener('click', () => {
+  openDialog('<h2>Handicap & targets</h2><p>Your handicap is your average shots above or below each map’s par over your last 20 earlier rounds with par data. It appears after 3 rounds. A lower handicap means fewer shots.</p><p>Your target is the map’s par plus your handicap, rounded to whole shots, with a minimum of 1. A round never contributes to its own target. Earlier scores submitted later can change historical targets.</p><p>Par is the game’s rounded daily average and changes throughout the day. We use the latest collected snapshot for each map; sample par is marked in the demo.</p><p>League groups include all submitted scores on the same map. Top percentage includes everyone with an equal or lower score; equal scores share a place. Global groups come from the game, with first and repeat runs shown separately.</p><p>Handicaps and targets are personal statistics. Weekly places and awards use total shots.</p>');
+});
 $('#archive-grid').addEventListener('click', event => {
   const card = event.target.closest('[data-week]');
   if (card) {
@@ -232,10 +280,17 @@ $('#archive-grid').addEventListener('click', event => {
 $('#score-body').addEventListener('click', event => {
   const button = event.target.closest('[data-map]');
   if (!button || !league) return;
-  const score = league.scores.find(round => round.playerId === button.dataset.player && round.mapNumber === Number(button.dataset.map));
+  const score = standingsForWeek(league, selectedStart).scores.find(round => round.playerId === button.dataset.player && round.mapNumber === Number(button.dataset.map));
+  if (!score) return;
   const player = league.players.find(person => person.id === score.playerId);
   const own = score.playerId === league.identity?.id;
-  openDialog(`<div class="eyebrow">Map #${score.mapNumber} · ${escapeHtml(formatDate(dateForMap(score.mapNumber, league.config), { day: 'numeric', month: 'short' }))}</div><h2>${escapeHtml(player.name)}${own ? ' <small>(you)</small>' : ''}</h2><div class="dialog-total">${score.total}<small>shots</small></div><div class="eyebrow">Checkpoints</div><ul class="checkpoint-list">${score.checkpoints.map(checkpoint => `<li><span>${checkpoint.index === 0 ? 'Start' : `Checkpoint ${checkpoint.index}`}</span><strong>${checkpoint.shots === null ? 'Skipped' : checkpoint.shots}</strong></li>`).join('')}</ul>`);
+  if (score.assigned) {
+    openDialog(`<div class="eyebrow">Map #${score.mapNumber} · ${escapeHtml(formatDate(score.courseDate, { day: 'numeric', month: 'short' }))}</div><h2>${escapeHtml(player.name)}</h2><div class="dialog-total assigned-total">${score.total}<small>assigned shots</small></div><p><strong>Did not compete.</strong> No score was submitted for this day.</p><p>The highest submitted score was ${score.highestTotal} shots. The assigned score is ${score.highestTotal} + 1 = <strong>${score.total} shots</strong>.</p><p>This counts toward the weekly total and awards. Personal statistics, handicap, and percentiles use played rounds only.</p><p>A late submission replaces this assignment. Assigned scores update when the day’s highest submitted score changes.</p>`);
+    return;
+  }
+  const result = roundStats(league, score);
+  const course = courseForMap(league, score.mapNumber);
+  openDialog(`<div class="eyebrow">Map #${score.mapNumber} · ${escapeHtml(formatDate(dateForMap(score.mapNumber, league.config), { day: 'numeric', month: 'short' }))}</div><h2>${escapeHtml(player.name)}${own ? ' <small>(you)</small>' : ''}</h2><div class="dialog-total">${score.total}<small>shots</small></div><dl class="dialog-stats">${stat('Against par', result.versusPar === null ? '–' : signed(result.versusPar))}${stat('Against target', result.versusExpected === null ? '–' : signed(result.versusExpected))}${stat('League group', `Top ${result.topPercent}%`, `Place ${result.rank} of ${result.players}`)}${stat('League average', result.average.toFixed(1), 'Shots on this map')}</dl><p>${escapeHtml(courseNote(course))}</p><p>${result.global ? `Global: ${globalGroup(result.global.first)} of first daily runs · ${globalGroup(result.global.repeat)} of repeat runs.` : 'Global percentile not collected for this score.'}</p><div class="eyebrow">Checkpoints</div><ul class="checkpoint-list">${score.checkpoints.map(checkpoint => `<li><span>${checkpoint.index === 0 ? 'Start' : `Checkpoint ${checkpoint.index}`}</span><strong>${checkpoint.shots === null ? 'Skipped' : checkpoint.shots}</strong></li>`).join('')}</ul>`);
 });
 
 $('#player-button').addEventListener('click', () => {
@@ -248,7 +303,7 @@ $('#player-button').addEventListener('click', () => {
 });
 
 $('#rules-button').addEventListener('click', () => {
-  openDialog('<h2>Rules</h2><p><strong>Monday–Friday, Copenhagen time.</strong> The lowest total across all five maps wins. During the week, you need every day so far to be ranked. Incomplete players appear below the rankings.</p><p><strong>One submission per map.</strong> Submitted scores are final. You can submit a missing score for an earlier weekday.</p><p><strong>Ties share a place.</strong> The lowest eligible total wins; the highest loses.</p><p><strong>Checkpoint counts vary by map.</strong> A dash means skipped. Checkpoint shots must add up to the total.</p><p>Demo dates: 21 September–15 October 2026. Scores are saved in this browser only.</p>');
+  openDialog('<h2>Rules</h2><p><strong>Monday–Friday, Copenhagen time.</strong> The lowest total across all five maps wins. Rankings include played and assigned scores. Today’s score remains due until submitted.</p><p><strong>Missed days.</strong> After a day ends, each player without a submission gets that day’s highest submitted score plus one. Red DNS scores mean did not compete. If nobody submitted, the day stays pending until a score is available.</p><p><strong>Weekly totals and awards include assignments.</strong> Personal statistics, handicap, and percentiles use played rounds only.</p><p><strong>One submission per map.</strong> Submitted scores are final. You can submit a missing score for an earlier weekday; it replaces the assignment. Assignments update when the highest submitted score changes.</p><p><strong>Ties share a place.</strong> The lowest eligible total wins; the highest loses.</p><p><strong>Checkpoint counts vary by map.</strong> A dash means skipped. Checkpoint shots must add up to the total.</p><p>Demo dates: 21 September–15 October 2026. Scores are saved in this browser only.</p>');
 });
 
 $('.dialog-close').addEventListener('click', () => $('#detail-dialog').close());

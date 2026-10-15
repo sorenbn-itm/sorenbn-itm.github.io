@@ -76,13 +76,14 @@ function leagueFor(totals, today = '2026-10-15') {
   return { config: { ...leagueConfig, today }, players, scores, identity: null };
 }
 
-test('incomplete players cannot beat complete players with fewer rounds', () => {
+test('players still missing today remain unranked after earlier missing days are assigned', () => {
   const league = leagueFor([[20, 20, 20, 20], [1, null, null, null], [21, 21, 21, 21]]);
   const { rows, dueDates } = standingsForWeek(league, '2026-10-12');
   assert.deepEqual(rows.map(row => row.player.id), ['0', '2', '1']);
   assert.deepEqual(rows.map(row => row.rank), [1, 2, null]);
   assert.equal(dueDates.length, 4);
-  assert.equal(rows.at(-1).total, 1);
+  assert.equal(rows.at(-1).total, 45);
+  assert.deepEqual(rows.at(-1).rounds.filter(round => round.assigned).map(round => round.total), [22, 22]);
 });
 
 test('ties use competition ranks and daily best includes all submitted rounds', () => {
@@ -93,12 +94,77 @@ test('ties use competition ranks and daily best includes all submitted rounds', 
   assert.equal(result.bestByMap[562], null);
 });
 
-test('historical awards require the full week and preserve tied winners and losers', () => {
+test('historical awards include assigned rounds and preserve tied winners and losers', () => {
   const league = leagueFor([[20, 20, 20, 20, 20], [20, 20, 20, 20, 20],
     [30, 30, 30, 30, 30], [30, 30, 30, 30, 30], [1]], '2026-10-19');
   const awards = awardsForWeek(league, '2026-10-12');
   assert.deepEqual(awards.winners.map(row => row.player.id), ['0', '1']);
   assert.deepEqual(awards.last.map(row => row.player.id), ['2', '3']);
+});
+
+test('missing past rounds get the daily maximum plus one for every absent player', () => {
+  const league = leagueFor([[20, 30, 10, 20], [25, null, null, 21], []]);
+  const originalScores = structuredClone(league.scores);
+  const result = standingsForWeek(league, '2026-10-12');
+  const absent = result.rows.find(row => row.player.id === '2');
+  assert.deepEqual(absent.rounds.map(round => [round.mapNumber, round.total, round.assigned]),
+    [[558, 26, true], [559, 31, true], [560, 11, true]]);
+  assert.equal(absent.total, 68);
+  assert.equal(absent.rank, null);
+  assert.equal(result.scores.filter(score => score.assigned && score.mapNumber === 559).length, 2);
+  assert.ok(result.scores.filter(score => score.assigned && score.mapNumber === 559).every(score => score.total === 31));
+  assert.deepEqual(league.scores, originalScores);
+  const partial = result.rows.find(row => row.player.id === '1');
+  assert.equal(partial.complete, true);
+  assert.equal(partial.total, 88);
+  assert.equal(partial.rank, 2);
+  assert.equal(result.bestByMap[559], 30);
+});
+
+test('no assignments are made for today, future days, or a day without a submission', () => {
+  const league = leagueFor([[20, null, 25, 30, 1], []]);
+  const { rows, scores, bestByMap } = standingsForWeek(league, '2026-10-12');
+  const absent = rows.find(row => row.player.id === '1');
+  assert.deepEqual(absent.rounds.map(round => round.mapNumber), [558, 560]);
+  assert.equal(absent.complete, false);
+  assert.equal(rows[0].complete, false);
+  assert.equal(bestByMap[559], null);
+  assert.equal(bestByMap[562], null);
+  assert.ok(!scores.some(score => score.mapNumber === 562));
+  assert.ok(!scores.some(score => score.assigned && score.mapNumber === 561));
+});
+
+test('Friday becomes assignable after the weekend and assignments count toward archive awards', () => {
+  const league = leagueFor([[20, 20, 20, 20, 20], []], '2026-10-19');
+  const result = awardsForWeek(league, '2026-10-12');
+  assert.deepEqual(result.standings.rows.map(row => [row.player.id, row.total, row.complete]),
+    [['0', 100, true], ['1', 105, true]]);
+  assert.equal(result.last[0].player.id, '1');
+  assert.equal(result.last[0].rounds.find(round => round.mapNumber === 562).total, 21);
+  assert.equal(result.standings.scores.length, 10);
+});
+
+test('late submissions replace assignments and update the baseline without accumulating penalties', () => {
+  const league = leagueFor([[20, 20, 20, 20, 20], [], []], '2026-10-19');
+  assert.equal(standingsForWeek(league, '2026-10-12').rows.find(row => row.player.id === '1').total, 105);
+  league.scores.push({ playerId: '1', mapNumber: 558, total: 40 });
+  const result = standingsForWeek(league, '2026-10-12');
+  const late = result.rows.find(row => row.player.id === '1');
+  assert.equal(late.rounds.filter(round => round.mapNumber === 558).length, 1);
+  assert.equal(late.rounds.find(round => round.mapNumber === 558).assigned, undefined);
+  assert.equal(late.total, 124);
+  const absent = result.rows.find(row => row.player.id === '2');
+  assert.equal(absent.rounds.find(round => round.mapNumber === 558).total, 41);
+  assert.equal(absent.total, 125);
+  assert.deepEqual(standingsForWeek(league, '2026-10-12'), result);
+});
+
+test('assigned scores support the largest submitted total and preserve ties between absent players', () => {
+  const league = leagueFor([[10000], [], []], '2026-10-13');
+  league.config.weekdays = [1];
+  const { rows } = standingsForWeek(league, '2026-10-12');
+  assert.deepEqual(rows.map(row => row.total), [10000, 10001, 10001]);
+  assert.deepEqual(rows.map(row => row.rank), [1, 2, 2]);
 });
 
 test('an empty week has no awards and a lone finisher is not also the loser', () => {

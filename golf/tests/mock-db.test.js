@@ -3,6 +3,7 @@ import { webcrypto } from 'node:crypto';
 import { beforeEach, test } from 'node:test';
 import { exampleScore } from '../config.js';
 import { database, STORAGE_KEY } from '../mock-db.js';
+import { standingsForWeek } from '../domain.js';
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 let storage;
@@ -58,6 +59,23 @@ test('different maps can store different checkpoint counts', async () => {
   const league = await database.getLeague();
   const own = league.scores.filter(score => score.playerId === league.identity.id);
   assert.deepEqual(own.map(score => score.checkpoints.length), [9, 1]);
+});
+
+test('a late submission replaces an assigned score while submissions remain insert-only', async () => {
+  const player = await database.registerPlayer('Casey Rivers');
+  let league = await database.getLeague();
+  let own = standingsForWeek(league, '2026-10-12').rows.find(row => row.player.id === player.id);
+  assert.equal(own.rounds.find(round => round.mapNumber === 560).assigned, true);
+  assert.equal(league.scores.filter(score => score.playerId === player.id).length, 0);
+  const rawText = 'Kinda Hard Golf #560\n📝 3\n0.🏌️ 3';
+  await database.submitScore({ rawText });
+  league = await database.getLeague();
+  own = standingsForWeek(league, '2026-10-12').rows.find(row => row.player.id === player.id);
+  const round = own.rounds.find(round => round.mapNumber === 560);
+  assert.equal(round.assigned, undefined);
+  assert.equal(round.total, 3);
+  assert.equal(own.rounds.filter(round => round.mapNumber === 560).length, 1);
+  await assert.rejects(database.submitScore({ rawText }), { code: 'SCORE_EXISTS' });
 });
 
 test('future, weekend and out-of-season submissions are rejected', async () => {

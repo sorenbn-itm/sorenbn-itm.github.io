@@ -101,7 +101,10 @@ export const database = {
   async getLeague() {
     await pause();
     const data = loadDatabase();
-    return copy({ config: leagueConfig, players: data.players, scores: data.scores, identity: identityFrom(data) });
+    const courses = [...new Set(data.scores.map(score => score.mapNumber))].map(mapNumber => ({
+      mapNumber, courseDate: dateForMap(mapNumber, leagueConfig), par: 22 + mapNumber % 7, source: 'sample',
+    }));
+    return copy({ config: leagueConfig, players: data.players, scores: data.scores, courses, identity: identityFrom(data) });
   },
 
   async registerPlayer(name) {

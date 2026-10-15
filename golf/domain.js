@@ -94,7 +94,21 @@ export function standingsForWeek(league, start) {
   const dates = weekDates(start, league.config);
   const dueDates = dates.filter(date => date <= league.config.today);
   const maps = dates.map(date => mapForDate(date, league.config));
-  const scores = league.scores.filter(score => maps.includes(score.mapNumber));
+  const dueMaps = dueDates.map(date => mapForDate(date, league.config));
+  const submittedScores = league.scores.filter(score => !score.assigned && dueMaps.includes(score.mapNumber));
+  const scores = [...submittedScores];
+  for (const date of dates.filter(date => date < league.config.today)) {
+    const mapNumber = mapForDate(date, league.config);
+    const played = submittedScores.filter(score => score.mapNumber === mapNumber);
+    if (!played.length) continue;
+    const highestTotal = Math.max(...played.map(score => score.total));
+    for (const player of league.players) {
+      if (!played.some(score => score.playerId === player.id)) {
+        scores.push({ playerId: player.id, mapNumber, courseDate: date,
+          total: highestTotal + 1, assigned: true, highestTotal });
+      }
+    }
+  }
   const rows = league.players.map(player => {
     const rounds = scores.filter(score => score.playerId === player.id);
     const total = rounds.reduce((sum, round) => sum + round.total, 0);
@@ -112,7 +126,7 @@ export function standingsForWeek(league, start) {
     lastRank = row.rank;
   });
   const bestByMap = Object.fromEntries(maps.map(map => {
-    const totals = scores.filter(score => score.mapNumber === map).map(score => score.total);
+    const totals = submittedScores.filter(score => score.mapNumber === map).map(score => score.total);
     return [map, totals.length ? Math.min(...totals) : null];
   }));
   return { dates, maps, dueDates, rows, bestByMap, scores };
@@ -126,5 +140,47 @@ export function awardsForWeek(league, start) {
     winners: complete.filter(row => row.total === complete[0].total),
     last: complete.length > 1 ? complete.filter(row => row.total === complete.at(-1).total) : [],
     standings,
+  };
+}
+
+export function courseForMap(league, mapNumber) {
+  return league.courses?.find(course => course.mapNumber === mapNumber
+    && course.courseDate === dateForMap(mapNumber, league.config)) ?? null;
+}
+
+export function handicapForPlayer(league, playerId, beforeMap) {
+  const rounds = league.scores.filter(score => !score.assigned && score.playerId === playerId && score.mapNumber < beforeMap)
+    .map(score => ({ score, course: courseForMap(league, score.mapNumber) }))
+    .filter(({ course }) => Number.isSafeInteger(course?.par) && course.par > 0)
+    .sort((a, b) => b.score.mapNumber - a.score.mapNumber).slice(0, 20);
+  const handicap = rounds.length >= 3
+    ? Math.round(rounds.reduce((sum, { score, course }) => sum + score.total - course.par, 0) / rounds.length * 10) / 10
+    : null;
+  const course = courseForMap(league, beforeMap);
+  return { handicap, rounds: rounds.length,
+    expected: handicap !== null && course ? Math.max(1, Math.round(course.par + handicap)) : null };
+}
+
+export function roundStats(league, score) {
+  const totals = league.scores.filter(round => !round.assigned && round.mapNumber === score.mapNumber).map(round => round.total);
+  const course = courseForMap(league, score.mapNumber);
+  const historical = handicapForPlayer(league, score.playerId, score.mapNumber);
+  return {
+    players: totals.length,
+    rank: 1 + totals.filter(total => total < score.total).length,
+    topPercent: totals.length ? Math.ceil(totals.filter(total => total <= score.total).length / totals.length * 100) : null,
+    average: totals.length ? totals.reduce((sum, total) => sum + total, 0) / totals.length : null,
+    versusPar: course ? score.total - course.par : null,
+    versusExpected: historical.expected === null ? null : score.total - historical.expected,
+    global: course?.source === 'game' ? course.percentiles?.[score.total] ?? null : null,
+  };
+}
+
+export function playerStats(league, playerId) {
+  const rounds = league.scores.filter(score => !score.assigned && score.playerId === playerId
+    && score.mapNumber <= mapForDate(league.config.today, league.config));
+  return { rounds: rounds.length,
+    average: rounds.length ? rounds.reduce((sum, score) => sum + score.total, 0) / rounds.length : null,
+    best: rounds.length ? Math.min(...rounds.map(score => score.total)) : null,
   };
 }
