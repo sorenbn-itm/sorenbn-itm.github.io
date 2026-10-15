@@ -87,7 +87,7 @@ function renderScorecard() {
       if (!score) return `<td><span class="score-empty" aria-label="${dates[index] > league.config.today ? 'Upcoming map' : 'No score submitted'}">${dates[index] > league.config.today ? '·' : '–'}</span></td>`;
       const best = score.total === bestByMap[map];
       return `<td><button class="score-button ${best ? 'best-score' : ''}" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots${best ? ', daily best' : ''}. View checkpoints.">${score.total}</button></td>`;
-    }).join('')}<td class="score-total">${row.rounds.length ? row.total : '–'}<small>${row.rounds.length}/${dueDates.length} rounds</small></td></tr>`;
+    }).join('')}<td class="score-total">${row.rounds.length ? row.total : '–'}<small>${row.rounds.length}/${dates.length} rounds</small></td></tr>`;
   }).join('') || '<tr><td colspan="8" class="empty-message">No scores submitted.</td></tr>';
   $('#completion-note').textContent = `${rows.filter(row => row.rounds.length).length} players · ${dueDates.length} of ${dates.length} days ${isCurrent ? 'played' : 'complete'}`;
   const complete = rows.filter(row => row.complete);
