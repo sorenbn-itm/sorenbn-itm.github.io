@@ -1,15 +1,15 @@
-import { exampleScore, leagueConfig } from './config.js';
+import { activeMap, leagueConfig } from './config.js';
 import { addDays, awardsForWeek, dateForMap, formatDate, mapForDate, mondayOf, parseScore,
   standingsForWeek, weekNumber, courseForMap, handicapForPlayer, playerStats, roundStats } from './domain.js';
 import { loadCourseData } from './course-data.js';
-import { database, STORAGE_KEY } from './mock-db.js';
+import { database, onIdentityChange } from './database.js';
 
 const $ = selector => document.querySelector(selector);
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 })[char]);
-const currentStart = mondayOf(leagueConfig.today);
-const firstStart = addDays(currentStart, -7 * leagueConfig.archiveWeeks);
+let currentStart = mondayOf(leagueConfig.today);
+let firstStart = mondayOf(leagueConfig.seasonStart);
 let selectedStart = currentStart;
 let league;
 let preview = null;
@@ -17,6 +17,7 @@ let saving = false;
 let toastTimeout;
 let statsPlayerId;
 let courseDataError = false;
+let refreshInProgress;
 const signed = number => number > 0 ? `+${number}` : number === 0 ? 'Even' : String(number);
 const globalGroup = value => value < 1 ? 'top <1%' : `top ${Math.round(value)}%`;
 const stat = (label, value, detail = '') => `<div class="stat"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</div>`;
@@ -32,9 +33,10 @@ function courseNote(course) {
 function renderPlayerStats() {
   const select = $('#stats-player');
   if (!league.players.some(player => player.id === statsPlayerId)) statsPlayerId = league.identity?.id ?? league.players[0]?.id;
-  select.innerHTML = league.players.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join('');
+  select.innerHTML = league.players.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join('') || '<option value="">No players yet</option>';
+  select.disabled = league.players.length === 0;
   select.value = statsPlayerId ?? '';
-  const map = mapForDate(league.config.today, league.config);
+  const map = activeMap(league.config);
   const history = handicapForPlayer(league, statsPlayerId, map);
   const overall = playerStats(league, statsPlayerId);
   const today = league.scores.find(score => score.playerId === statsPlayerId && score.mapNumber === map);
@@ -91,13 +93,15 @@ function renderIdentity() {
   const player = league.identity;
   $('#player-label').textContent = player ? player.name : 'Set name';
   $('#name-form').hidden = Boolean(player);
-  const todayScore = submittedScore(mapForDate(league.config.today, league.config));
-  $('#score-form').hidden = Boolean(todayScore);
-  $('#submission-intro').hidden = Boolean(todayScore);
-  $('#submit-title').textContent = todayScore ? 'Score submitted' : 'Submit score';
+  const todayScore = submittedScore(activeMap(league.config));
+  const available = league.config.acceptingScores;
+  $('#score-form').hidden = Boolean(todayScore) || !available;
+  $('#submission-intro').hidden = Boolean(todayScore) || !available;
+  $('#submit-title').textContent = todayScore ? 'Score submitted' : available ? 'Submit score' : 'No weekday map';
   $('#submission-status').hidden = !todayScore;
   $('#submission-status').textContent = todayScore ? `${todayScore.total} shots · Map #${todayScore.mapNumber}` : '';
-  $('.submission-footnote').textContent = todayScore ? 'You can submit again tomorrow.' : 'One submission per map. Scores are final.';
+  $('.submission-footnote').textContent = todayScore ? 'You can submit when the next weekday map opens.'
+    : available ? 'One submission per map. Scores are final.' : 'Score entry opens with the next weekday map.';
 }
 
 function renderScorecard() {
@@ -135,12 +139,13 @@ function renderScorecard() {
 }
 
 function renderArchive() {
-  $('#archive-grid').innerHTML = Array.from({ length: league.config.archiveWeeks }, (_, index) => {
+  const weeks = Math.min(league.config.archiveWeeks, Math.round((Date.parse(currentStart) - Date.parse(firstStart)) / 604800000));
+  $('#archive-grid').innerHTML = Array.from({ length: weeks }, (_, index) => {
     const start = addDays(currentStart, -7 * (index + 1));
     const { winners, last } = awardsForWeek(league, start);
     const award = (rows, label, icon) => `<div class="award-row"><span class="award-icon" aria-hidden="true">${icon}</span><div><div class="eyebrow">${label}${rows.length > 1 ? ' · TIED' : ''}</div><strong>${escapeHtml(rows.map(row => row.player.name).join(' & ') || 'No eligible player')}</strong></div><span class="award-total">${rows[0]?.total ?? '–'}<small>shots</small></span></div>`;
     return `<a href="#leaderboard" class="archive-card" data-week="${start}" aria-label="View week ${weekNumber(start)}, ${escapeHtml(rangeLabel(start))}"><div class="archive-card-top"><span>Week ${weekNumber(start)}</span><span class="arrow" aria-hidden="true">↗</span></div><h3>${escapeHtml(rangeLabel(start))}</h3>${award(winners, 'Winner', '🏆')}${award(last, 'Loser', '🥄')}</a>`;
-  }).join('');
+  }).join('') || '<p class="empty-message">No completed weeks yet.</p>';
 }
 
 function render() {
@@ -148,14 +153,27 @@ function render() {
   renderScorecard();
   renderArchive();
   renderPlayerStats();
-  $('#course-date').textContent = formatDate(league.config.today, { weekday: 'short', day: 'numeric', month: 'short' });
-  $('#course-number').textContent = `Daily map #${mapForDate(league.config.today, league.config)}`;
-  $('#course-par').textContent = courseNote(courseForMap(league, mapForDate(league.config.today, league.config)));
+  $('#course-date').textContent = formatDate(league.config.activeCourseDate, { weekday: 'short', day: 'numeric', month: 'short' });
+  $('#course-number').textContent = `Daily map #${activeMap(league.config)}`;
+  $('#course-par').textContent = courseNote(courseForMap(league, activeMap(league.config)));
+  $('#connection-status').hidden = true;
   if (preview) showPreview(preview);
 }
 
 async function refresh() {
+  if (refreshInProgress) await refreshInProgress.catch(() => {});
+  const work = refreshLeague();
+  refreshInProgress = work;
+  try { await work; }
+  finally { if (refreshInProgress === work) refreshInProgress = null; }
+}
+
+async function refreshLeague() {
   const saved = await database.getLeague();
+  const viewingCurrent = selectedStart === currentStart;
+  currentStart = mondayOf(saved.config.today);
+  firstStart = mondayOf(saved.config.seasonStart);
+  if (viewingCurrent || selectedStart < firstStart || selectedStart > currentStart) selectedStart = currentStart;
   try {
     league = await loadCourseData(saved);
     courseDataError = false;
@@ -254,11 +272,6 @@ $('#score-form').addEventListener('submit', async event => {
 });
 
 $('#score-text').addEventListener('input', clearPreview);
-$('#example-button').addEventListener('click', () => {
-  $('#score-text').value = exampleScore;
-  clearPreview();
-  $('#score-text').focus();
-});
 $('#previous-week').addEventListener('click', () => setWeek(addDays(selectedStart, -7)));
 $('#next-week').addEventListener('click', () => setWeek(addDays(selectedStart, 7)));
 $('#current-week').addEventListener('click', () => setWeek(currentStart));
@@ -299,11 +312,11 @@ $('#player-button').addEventListener('click', () => {
     $('#player-name').focus();
     return;
   }
-  openDialog(`<div class="eyebrow">Name</div><h2>${escapeHtml(league.identity.name)}</h2><p>Your name is fixed for this browser. Clearing site storage or resetting the demo lets you start again.</p><p>Demo scores are saved in this browser only.</p>`);
+  openDialog(`<div class="eyebrow">Name</div><h2>${escapeHtml(league.identity.name)}</h2><p>Your name is fixed for this browser. Clearing site storage loses access to this player, but keeps the name and scores on the shared leaderboard.</p>`);
 });
 
 $('#rules-button').addEventListener('click', () => {
-  openDialog('<h2>Rules</h2><p><strong>Monday–Friday, Copenhagen time.</strong> The lowest total across all five maps wins. Rankings include played and assigned scores. Today’s score remains due until submitted.</p><p><strong>Missed days.</strong> After a day ends, each player without a submission gets that day’s highest submitted score plus one. Red DNF scores mean did not finish. If nobody submitted, the day stays pending until a score is available.</p><p><strong>Weekly totals and awards include assignments.</strong> Personal statistics, handicap, and percentiles use played rounds only.</p><p><strong>One submission per map.</strong> Submitted scores are final. You can submit a missing score for an earlier weekday; it replaces the assignment. Assignments update when the highest submitted score changes.</p><p><strong>Ties share a place.</strong> The lowest eligible total wins; the highest loses.</p><p><strong>Checkpoint counts vary by map.</strong> A dash means skipped. Checkpoint shots must add up to the total.</p><p>Demo dates: 21 September–15 October 2026. Scores are saved in this browser only.</p>');
+  openDialog('<h2>Rules</h2><p><strong>Monday–Friday, Copenhagen time.</strong> The lowest total across all five maps wins. Rankings include played and assigned scores. Today’s score remains due until submitted.</p><p><strong>Missed days.</strong> After a day ends, each player without a submission gets that day’s highest submitted score plus one. Red DNF scores mean did not finish. If nobody submitted, the day stays pending until a score is available.</p><p><strong>Weekly totals and awards include assignments.</strong> Personal statistics, handicap, and percentiles use played rounds only.</p><p><strong>One submission per map.</strong> Submitted scores are final. Missing earlier weekday scores can be submitted before the current map is submitted. They replace assignments.</p><p><strong>Daily maps reset at 04:00 UTC.</strong> The active game map can differ from the Copenhagen calendar date overnight.</p><p><strong>Ties share a place.</strong> The lowest eligible total wins; the highest loses.</p><p><strong>Checkpoint counts vary by map.</strong> A dash means skipped. Checkpoint shots must add up to the total.</p>');
 });
 
 $('.dialog-close').addEventListener('click', () => $('#detail-dialog').close());
@@ -326,32 +339,25 @@ $('#export-button').addEventListener('click', async () => {
   } catch (error) { toast(error.message); }
 });
 
-$('#reset-button').addEventListener('click', () => {
-  openDialog('<h2>Reset demo?</h2><p>This clears your name and submissions and restores the sample scores. Export first if you want to keep them.</p><div class="dialog-actions"><button class="button button-light" data-close>Cancel</button><button class="button button-green" id="confirm-reset">Reset demo</button></div>');
-  $('#confirm-reset').addEventListener('click', async event => {
-    event.currentTarget.disabled = true;
-    try {
-      await database.resetDemo();
-      selectedStart = currentStart;
-      $('#player-name').value = '';
-      $('#score-text').value = '';
-      $('#name-error').textContent = '';
-      clearPreview();
-      await refresh();
-      $('#detail-dialog').close();
-      toast('Demo reset.');
-    } catch (error) { toast(error.message); }
-    finally { if ($('#confirm-reset')) $('#confirm-reset').disabled = false; }
-  });
-});
+function showConnectionError(error) {
+  $('#connection-status').hidden = false;
+  $('#connection-status').textContent = error.message;
+  if (!league) {
+    $('#name-form').hidden = true;
+    $('#score-form').hidden = true;
+    $('#score-body').innerHTML = `<tr><td colspan="8" class="empty-message">${escapeHtml(error.message)}</td></tr>`;
+  }
+}
+
+function refreshWhenVisible() {
+  if (document.visibilityState === 'visible' && !refreshInProgress && !saving) refresh().catch(showConnectionError);
+}
 
 window.addEventListener('storage', event => {
   if (event.key === 'golf.theme' || event.key === null) applyTheme(event.newValue);
-  if (event.key === STORAGE_KEY || event.key === null) refresh().catch(error => toast(error.message));
 });
-
-refresh().catch(error => {
-  $('#score-body').innerHTML = `<tr><td colspan="8" class="empty-message">${escapeHtml(error.message)}</td></tr>`;
-  $('#score-error').textContent = error.message;
-  toast(error.message);
-});
+window.addEventListener('focus', refreshWhenVisible);
+document.addEventListener('visibilitychange', refreshWhenVisible);
+setInterval(refreshWhenVisible, 60_000);
+onIdentityChange(refreshWhenVisible);
+refresh().catch(showConnectionError);

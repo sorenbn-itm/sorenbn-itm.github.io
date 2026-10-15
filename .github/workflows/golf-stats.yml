@@ -25,6 +25,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: golf/package-lock.json
+      - run: npm ci
+        working-directory: golf
       - run: node --test
         working-directory: golf
       - run: node golf/scripts/scrape-courses.js
@@ -40,9 +44,11 @@ jobs:
             git push
           fi
       - uses: actions/configure-pages@v5
+      - run: npm run build
+        working-directory: golf
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
   deploy:
     needs: collect
     runs-on: ubuntu-latest

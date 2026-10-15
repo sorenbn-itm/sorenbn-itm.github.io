@@ -48,8 +48,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 svg { display: block; }
 [hidden] { display: none !important; }
 .container { width: calc(100% - 96px); max-width: 1280px; margin: 0 auto; }
-.demo-banner { display: flex; justify-content: center; align-items: center; gap: 9px; padding: 9px 20px; background: var(--raised); color: var(--muted); font-size: 12px; }
-.demo-banner strong { color: var(--ink); font-weight: 600; }
+.connection-status { padding: 9px 20px; background: var(--raised); color: var(--muted); font-size: 12px; text-align: center; }
 .status-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 32px; height: 98px; border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 19px; font-weight: 650; white-space: nowrap; }

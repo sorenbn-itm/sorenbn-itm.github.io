@@ -1,29 +1,19 @@
-import { dateInTimeZone } from './domain.js';
+import { dateInTimeZone, mapForDate, mondayOf } from './domain.js';
 
 const timeZone = 'Europe/Copenhagen';
-const demoNow = '2026-10-15T12:00:00Z';
+const today = dateInTimeZone(new Date(), timeZone);
 
 export const leagueConfig = Object.freeze({
   name: 'Kinda Hard Golf scores',
   timeZone,
   weekdays: [1, 2, 3, 4, 5],
-  // The mock league has a fixed clock so its sample results remain consistent.
-  today: dateInTimeZone(demoNow, timeZone),
-  mapAnchor: { date: '2026-10-15', number: 561 },
+  // Supabase replaces these initial calendar values with its server clock.
+  today,
+  seasonStart: mondayOf(today),
+  mapAnchor: { date: '2025-04-02', number: 0 },
   archiveWeeks: 3,
 });
 
-export const exampleScore = `Kinda Hard Golf #561
-📝 25
-
-8.⛳ 5
-7.⛳ 2
-6.⛳ 1
-5.⛳ 1
-4.⛳ 1
-3.⛳ 2
-2.⛳ -
-1.⛳ 10
-0.🏌️ 3
-
-https://kindahard.golf/`;
+export function activeMap(config) {
+  return config.activeMapNumber ?? mapForDate(config.today, config);
+}

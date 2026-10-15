@@ -17,7 +17,7 @@
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-    <div class="demo-banner"><span class="status-dot"></span><strong>Demo</strong><span>Sample scores. Changes are saved in this browser only.</span></div>
+    <div class="connection-status" id="connection-status" role="status">Connecting to leaderboard…</div>
     <header class="site-header container">
       <a class="brand" href="#leaderboard" aria-label="Kinda Hard Golf scores home">
         <img class="brand-mark" src="./assets/flag.svg" alt="" width="43" height="43">
@@ -56,7 +56,7 @@
         <aside class="submission-card" id="submit" aria-labelledby="submit-title">
           <h2 id="submit-title">Submit score</h2>
           <p id="submission-intro">Paste the result copied from the game.</p>
-          <form id="name-form" class="name-form">
+          <form id="name-form" class="name-form" hidden>
             <label for="player-name">Name</label>
             <div class="name-input-row"><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Your name" minlength="2" maxlength="24" required><button class="button button-green" type="submit">Save name</button></div>
             <small>Your name is fixed for this browser.</small>
@@ -65,8 +65,8 @@
           <p class="submission-status" id="submission-status" tabindex="-1" hidden></p>
           <form id="score-form" hidden>
             <label for="score-text">Result</label>
-            <textarea id="score-text" name="score" rows="9" placeholder="Kinda Hard Golf #561&#10;📝 25&#10;&#10;8.⛳ 5&#10;7.⛳ 2&#10;…" spellcheck="false" required aria-describedby="score-help score-error"></textarea>
-            <div class="input-footer"><span id="score-help">Include all checkpoint lines.</span><button type="button" id="example-button" class="small-link">Example</button></div>
+            <textarea id="score-text" name="score" rows="9" placeholder="Paste the full result copied from the game." spellcheck="false" required aria-describedby="score-help score-error"></textarea>
+            <div class="input-footer"><span id="score-help">Include all checkpoint lines.</span></div>
             <p class="form-error" id="score-error" role="alert"></p>
             <div id="score-preview" hidden></div>
             <button type="submit" class="button button-green submit-button" id="submit-button">Preview score <span aria-hidden="true">↗</span></button>
@@ -79,7 +79,7 @@
         <div class="archive-grid" id="archive-grid"></div>
       </section>
     </main>
-    <footer class="site-footer container"><span>Kinda Hard Golf scores</span><div><button id="export-button" class="small-link">Export scores ↓</button><button id="reset-button" class="small-link">Reset demo</button></div></footer>
+    <footer class="site-footer container"><span>Kinda Hard Golf scores</span><div><button id="export-button" class="small-link">Export scores ↓</button></div></footer>
     <dialog id="detail-dialog" class="dialog"><button class="dialog-close icon-button" type="button" aria-label="Close dialog">×</button><div id="dialog-content"></div></dialog>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   </body>

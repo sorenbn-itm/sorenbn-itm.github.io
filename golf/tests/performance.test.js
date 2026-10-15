@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { leagueConfig } from '../config.js';
+import { leagueConfig } from './fixtures.js';
 import { dateForMap, handicapForPlayer, playerStats, roundStats, standingsForWeek } from '../domain.js';
 import { mergeCourseData, validateCourse } from '../course-data.js';
 import { courseIdentity, discoverSource, scrapeCourse, updateFeed } from '../scripts/scrape-courses.js';

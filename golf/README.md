@@ -1,6 +1,6 @@
 # Kinda Hard Golf scores
 
-A desktop score tracker for Kinda Hard Golf. Open `/golf/` on GitHub Pages. No build step, external fonts, or dependencies are required. Dark mode is the default; the theme toggle saves a preference under `golf.theme` in localStorage.
+A desktop score tracker for Kinda Hard Golf. Open `/golf/` on GitHub Pages. The browser loads a bundled Supabase client from this repository. No external fonts are required. Dark mode is the default; the theme toggle saves a preference under `golf.theme` in localStorage.
 
 ## Local preview
 
@@ -12,20 +12,32 @@ python -m http.server 8767 --bind 127.0.0.1
 
 Visit `http://127.0.0.1:8767/golf/`. JavaScript modules require HTTP; opening the HTML file directly is unsupported.
 
-Run the domain and adapter checks with Node.js 20 or later:
+For development and database checks, use Node.js 22 or later:
 
 ```sh
 cd golf
-node --test
+npm ci
+npm test
+npm run build
 ```
 
-## Demo data and storage
+## Supabase setup
 
-The sample season contains the week of 12–16 October 2026 and the three preceding weeks. The mock instant in `config.js` is fixed at 15 October; `dateInTimeZone()` converts it to a Copenhagen calendar date. Map #561 matches that date in the inspected game calendar. The live game resets at 04:00 UTC, which differs from the league's Copenhagen midnight; a live adapter must account for this when selecting the active course. Sample checkpoint counts vary by map.
+1. Enable anonymous sign-ins in the Supabase project's Authentication settings.
+2. Run the complete contents of `supabase/setup.sql` in the project's SQL Editor. It creates empty tables and the required functions and access policies. Rerunning it preserves existing players, scores, and the season start.
+3. Set the project URL and publishable key in `supabase-config.js`. This key is public configuration. Do not use a secret or service-role key.
+4. Push the site changes to `main` to run the Pages workflow, or build with `npm run build` and deploy `dist/`. The published route is `/golf/`.
+5. Register your real player name on the published site. Sessions are specific to each browser origin; a localhost session does not transfer to GitHub Pages.
 
-Players, browser identity, and submitted scores are stored under `office-open.mock.v1` in localStorage. Name registration is case-insensitive and the name cannot be changed through the app. Reset demo removes the identity and submissions and restores the sample league. Export scores downloads the stored dataset as JSON.
+The default season starts on the Monday of the week when setup first runs. The database's `golf_settings` row contains the season start, map-date anchor, and game reset hour. Map zero is 2 April 2025, and the game changes its map at 04:00 UTC. Weekly standings use the server's current Copenhagen date; entry and today's player statistics use the active game map, which can belong to the previous calendar day overnight. Weekend maps are not eligible.
 
-After today's score is submitted, the form is replaced by the saved result. This also applies after reloading or when another tab submits the score. The form is available when the active league date has no result for the current player.
+There is no seed data. A successful shared database read removes the old browser demo key `office-open.mock.v1` without importing it. Theme preferences remain under `golf.theme`. Anonymous session tokens are managed by the Supabase client under `golf.auth.v1`; exports never include tokens. Clearing site storage loses access to that player, while the shared name and scores remain stored.
+
+The form disappears after the active map's score is submitted and stays hidden after reload. The page refreshes shared standings on focus, after writes, after identity changes, and once per minute while visible. It updates the active week and score-entry state as the server date or game map changes.
+
+The public leaderboard exposes player names and scores. Only a registered anonymous session can submit for its own player. Names and score submissions are insert-only through validated database functions; direct API inserts, updates, and deletes are denied. Unique constraints enforce names and player/map pairs. Browser checks provide feedback; the database independently parses the raw result and validates totals, checkpoint lines, dates, and ownership.
+
+The API currently returns all submitted league history in one snapshot, preserving the last-20-round handicap calculation. This is intended for a small office league. Test the table and function permissions after changing the schema. The local SQL checks run the setup in an isolated PostgreSQL WASM runtime with Supabase's roles and identity function represented locally; they do not create players or scores in the live project.
 
 ## Handicaps and player statistics
 
@@ -35,7 +47,7 @@ The handicap is the average of `shots − par` across the last 20 earlier played
 
 League groups compare submitted scores on the same map. `Top N%` is the percentage of scores equal to or better than the player's score, rounded up; ties share the same rank and group. A sole player or an all-tied field is top 100%. Global groups are supplied by the game for first daily runs and repeat runs separately. They are not inferred from the league's scores. Scores outside the collected range show no global percentile.
 
-Demo historical courses use visibly marked sample par. A collected snapshot replaces sample par only when both its map number and date match the demo calendar. The fixed demo date does not advance with the collector. Remove sample par when connecting a live league; real handicaps need three earlier rounds with collected par.
+Course statistics are shown only when their map number and date match the league calendar. There is no sample par in the live league. Handicaps need three earlier played rounds with collected par.
 
 ## Daily game data
 
@@ -51,9 +63,7 @@ The collector reads the public game page and its current JavaScript module, disc
 
 `.github/workflows/golf-stats.yml` collects four times daily at 05:17, 11:17, 17:17, and 23:17 UTC, saves snapshots to the repository, and deploys GitHub Pages. Main-branch pushes run checks and deploy without recollecting. Manual workflow runs collect and deploy. In repository **Settings → Pages**, select **GitHub Actions** as the build source before enabling this workflow. Its explicit Pages deployment publishes collected data even though commits made by `GITHUB_TOKEN` do not trigger another workflow. Scheduled jobs can be delayed by GitHub; timestamps in the UI identify the collection time.
 
-The browser reads only the local JSON feed, avoiding cross-origin game requests. If the feed fails, score entry and league statistics remain available; game data is marked unavailable. Global statistics are never fabricated when a snapshot is missing. The archive begins when collection starts; this collector cannot backfill past game statistics.
-
-This data is local to each browser and origin. It is editable through browser developer tools and provides no identity verification. The mock does not provide a shared leaderboard or protection against impersonation. Storage errors are reported instead of claiming a successful save. Tabs on the same origin refresh when storage changes.
+The browser reads game statistics from the checked-in JSON feed, avoiding cross-origin game requests. If the feed fails, score entry and league statistics remain available; game data is marked unavailable. Global statistics are never fabricated when a snapshot is missing. The archive begins when collection starts; this collector cannot backfill past game statistics.
 
 ## League rules
 
@@ -64,7 +74,7 @@ This data is local to each browser and origin. It is editable through browser de
 - Players with pending due rounds appear below the rankings, ordered by rounds counted, then total. Pending rounds do not count as zero.
 - Equal totals share a place. The archive shows every tied winner and loser. A sole eligible player is the winner and has no loser.
 - One submission per player per map. Scores are final: duplicate writes are rejected by the adapter. There is no update operation.
-- Missing historical scores can be submitted during the demo and recalculate archives. Define a submission deadline before making weekly awards permanent.
+- Missing earlier weekday scores in the season can be submitted before the current map is submitted. They recalculate assignments and archived awards. Existing submissions cannot be changed.
 - Checkpoint counts vary by map. A checkpoint dash means skipped, not zero shots. The reported total must equal the numeric checkpoint shots.
 
 ## Source layout
@@ -72,29 +82,23 @@ This data is local to each browser and origin. It is editable through browser de
 - `index.html`, `styles.css`, `assets/`: page and original SVG artwork.
 - `app.js`: rendering, forms, dialogs, and interactions.
 - `domain.js`: parsing, date arithmetic, standings, and awards.
-- `config.js`: sample clock, map-date anchor, and competition days.
-- `mock-db.js`: asynchronous database adapter and sample-data generator.
+- `config.js`: initial calendar defaults and active-map selection; server configuration takes precedence.
+- `database.js`, `supabase-db.js`, `supabase-config.js`: client initialization, database adapter, and public project configuration.
+- `supabase/setup.sql`: schema, server validation, permissions, and backend calendar.
+- `scripts/build.js`, `vendor/`: bundled client and allowlisted Pages artifact.
+- `tests/`: domain, collection, adapter, and SQL permission checks; never published.
 - `course-data.js`, `data/courses.json`: validated daily game snapshots and feed loading.
 - `scripts/scrape-courses.js`: game page inspection and daily statistics collection.
 
-## Connecting Supabase
-
-Replace the adapter imported by `app.js`. Keep this interface:
+## Database interface
 
 | Method | Result |
 | --- | --- |
-| `getLeague()` | `{ config, players, scores, courses, identity }` |
-| `registerPlayer(name)` | A player record |
-| `submitScore({ rawText })` | The saved score, including `courseDate`; rejects existing player/map pairs |
-| `exportData()` | A JSON string |
-| `resetDemo()` | Restores browser-local sample data; remove this action for the live league |
+| `getLeague()` | `{ config, players, scores, courses, identity }` from `golf_state()` |
+| `registerPlayer(name)` | Anonymous session and immutable player record from `golf_register_player()` |
+| `submitScore({ rawText })` | Server-parsed score from `golf_submit_score()` |
+| `exportData()` | JSON containing calendar, players, and submitted scores; no auth session |
 
-Player records contain `id`, `name`, `color`, and `ink`. Scores contain `playerId`, `mapNumber`, `courseDate`, `total`, `checkpoints: [{ index, shots }]`, `rawText`, and optionally `submittedAt`. `shots: null` represents a skipped checkpoint. Identity is the current player record or `null`.
+`league.scores` contains actual submissions only. `standingsForWeek()` derives DNF scores with `assigned: true` and `highestTotal`, keeping assignments out of submission uniqueness checks and personal statistics. Courses come from the validated checked-in feed. Dates and active-map eligibility come from the database.
 
-Return submitted scores in `league.scores`. `standingsForWeek()` derives missed-day scores with `assigned: true` and `highestTotal`, keeping them out of personal statistics and submission uniqueness checks. Export contains the submitted records; standings reproduce assignments from those records and the league date. Keep this separation in a live adapter so a late submission can replace an assignment while actual submissions remain immutable.
-
-Courses contain `mapNumber`, `courseDate`, `par`, and `source`. Game snapshots also include `fetchedAt`, `averageScore`, `percentFinished`, `minScore`, `maxScore`, and `percentiles: { [shots]: { first, repeat } }`. A live adapter can return `courses: []` and use the checked-in JSON feed, or return persisted course snapshots from its backend. Ensure the live map calendar matches the game before associating statistics with results.
-
-Use anonymous sessions for identity, and enforce name immutability, ownership, unique player/map pairs, insert-only scores, date eligibility, and score validation in the backend. Reject updates, including upserts, with database permissions and a unique constraint on `(player_id, map_number)`. Browser validation is only for feedback. Never place a Supabase secret/service-role key in this repository or frontend. Replace the mock clock and anchor with a verified course calendar. Use `dateInTimeZone()` for live dates in Europe/Copenhagen and refresh the active week when that date changes. Refresh shared standings after writes and when the page regains focus, or subscribe to database changes. Define the archived-week cutoff policy before launch.
-
-When switching adapters, remove the mock storage listener, demo banner, sample-data controls, and fixed-clock explanations. The UI currently imports `STORAGE_KEY` for cross-tab mock refresh; that listener is separate from the adapter interface.
+The client dependency is pinned in `package-lock.json`. The checked-in `vendor/` files allow local HTTP preview without a build. Run `npm run build` after dependency changes; it regenerates the SDK bundle and third-party licenses, then writes a clean allowlisted `dist/golf/`. Tests, SQL files, Node dependencies, and sample fixtures are excluded from the Pages artifact. The workflow installs dependencies, runs the checks, collects game statistics on scheduled/manual runs, builds, and publishes `dist/`.

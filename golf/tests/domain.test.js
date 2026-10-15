@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { exampleScore, leagueConfig } from '../config.js';
+import { exampleScore, leagueConfig } from './fixtures.js';
 import { addDays, awardsForWeek, dateForMap, dateInTimeZone, mapForDate, mondayOf, parseScore,
   standingsForWeek, weekDates, weekNumber } from '../domain.js';
 
