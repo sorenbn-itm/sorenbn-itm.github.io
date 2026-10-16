@@ -125,11 +125,14 @@ export function standingsForWeek(league, start) {
     lastTotal = row.total;
     lastRank = row.rank;
   });
+  const first = rows[0];
+  const leaders = first?.rounds.length
+    ? rows.filter(row => row.rounds.length === first.rounds.length && row.total === first.total) : [];
   const bestByMap = Object.fromEntries(maps.map(map => {
     const totals = submittedScores.filter(score => score.mapNumber === map).map(score => score.total);
     return [map, totals.length ? Math.min(...totals) : null];
   }));
-  return { dates, maps, dueDates, rows, bestByMap, scores };
+  return { dates, maps, dueDates, rows, leaders, bestByMap, scores };
 }
 
 export function awardsForWeek(league, start) {

@@ -94,6 +94,35 @@ test('ties use competition ranks and daily best includes all submitted rounds', 
   assert.equal(result.bestByMap[562], null);
 });
 
+test('weekly leaders include tied provisional leaders when earlier days have no scores', () => {
+  const league = leagueFor([[null, null, null, 25, 24], [null, null, null, 21, 28],
+    [null, null, null, 29, 29], [null, null, null, 37, 62]], '2026-10-16');
+  const result = standingsForWeek(league, '2026-10-12');
+  assert.deepEqual(result.leaders.map(row => row.player.id), ['0', '1']);
+  assert.ok(result.leaders.every(row => row.total === 49 && row.rank === null));
+  assert.deepEqual(awardsForWeek(league, '2026-10-12').winners, []);
+  league.scores.find(score => score.playerId === '1' && score.mapNumber === 562).total = 29;
+  assert.deepEqual(standingsForWeek(league, '2026-10-12').leaders.map(row => row.player.id), ['0']);
+});
+
+test('weekly leaders favor counted rounds over a lower incomplete total', () => {
+  const league = leagueFor([[null, null, null, 25, 24], [null, null, null, 1]], '2026-10-16');
+  let result = standingsForWeek(league, '2026-10-12');
+  assert.deepEqual(result.leaders.map(row => row.player.id), ['0']);
+  assert.ok(result.rows.find(row => row.player.id === '1').total < result.leaders[0].total);
+  result = standingsForWeek(leagueFor([[20, 20, 20, 20], [1]]), '2026-10-12');
+  assert.deepEqual(result.leaders.map(row => row.player.id), ['0']);
+  assert.equal(result.leaders[0].rank, 1);
+});
+
+test('an empty week has no weekly leader, including a signed-in player with no rounds', () => {
+  const league = leagueFor([[]]);
+  league.identity = league.players[0];
+  const result = standingsForWeek(league, '2026-10-12');
+  assert.equal(result.rows.length, 1);
+  assert.deepEqual(result.leaders, []);
+});
+
 test('historical awards include assigned rounds and preserve tied winners and losers', () => {
   const league = leagueFor([[20, 20, 20, 20, 20], [20, 20, 20, 20, 20],
     [30, 30, 30, 30, 30], [30, 30, 30, 30, 30], [1]], '2026-10-19');

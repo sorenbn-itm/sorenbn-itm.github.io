@@ -98,6 +98,7 @@ tr.own-row { background: var(--own); }
 .player-cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .player-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .player-name small { color: var(--accent); font-size: 10px; margin-left: 4px; }
+.leader-crown { width: 16px; height: 16px; flex-shrink: 0; color: var(--gold); }
 .score-button { width: 33px; height: 33px; border-radius: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
 .score-button:hover { background: var(--raised); box-shadow: 0 0 0 1px var(--line); }
 .score-button.best-score { background: var(--accent-soft); color: var(--accent); font-weight: 600; }

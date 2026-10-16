@@ -174,8 +174,10 @@ function setAccountMode(mode) {
 }
 
 function renderScorecard() {
-  const { dates, maps, dueDates, rows, bestByMap } = standingsForWeek(league, selectedStart);
+  const { dates, maps, dueDates, rows, leaders: currentLeaders, bestByMap } = standingsForWeek(league, selectedStart);
   const isCurrent = selectedStart === currentStart;
+  const leaders = isCurrent ? currentLeaders : rows.filter(row => row.rank === 1);
+  const crownLabel = isCurrent ? 'Currently leading this week' : 'Weekly winner';
   $('#week-status').textContent = isCurrent ? 'In progress' : 'Final results';
   $('#week-title').textContent = isCurrent ? 'This week' : `Week ${weekNumber(selectedStart)}`;
   $('#week-range').textContent = rangeLabel(selectedStart);
@@ -187,7 +189,8 @@ function renderScorecard() {
     `<th scope="col" class="${date === league.config.today ? 'today' : ''}">${formatDate(date, { weekday: 'short' }).toUpperCase()}<small title="Map #${maps[index]}">${formatDate(date, { day: 'numeric', month: 'short' })}</small><small>${courseForMap(league, maps[index]) ? `${courseForMap(league, maps[index]).source === 'sample' ? 'Sample ' : ''}Par ${courseForMap(league, maps[index]).par}` : 'Par –'}</small></th>`).join('')}<th scope="col">TOTAL</th></tr>`;
   $('#score-body').innerHTML = rows.map(row => {
     const own = row.player.id === league.identity?.id;
-    return `<tr class="${own ? 'own-row' : ''}"><td>${row.rank === 1 ? '<span class="rank-leader" aria-label="First place">1</span>' : row.rank ?? '–'}</td><td><div class="player-cell"><span class="player-name" title="${escapeHtml(row.player.name)}">${escapeHtml(row.player.name)}${own ? '<small>you</small>' : ''}</span></div></td>${maps.map((map, index) => {
+    const crown = leaders.includes(row) ? `<svg class="leader-crown" viewBox="0 0 24 24" role="img" aria-label="${crownLabel}"><title>${crownLabel}</title><path fill="currentColor" d="m3 6 5 4 4-7 4 7 5-4-2 12H5L3 6Zm2 14h14v2H5z"/></svg>` : '';
+    return `<tr class="${own ? 'own-row' : ''}"><td>${row.rank === 1 ? '<span class="rank-leader" aria-label="First place">1</span>' : row.rank ?? '–'}</td><td><div class="player-cell"><span class="player-name" title="${escapeHtml(row.player.name)}">${escapeHtml(row.player.name)}${own ? '<small>you</small>' : ''}</span>${crown}</div></td>${maps.map((map, index) => {
       const score = row.rounds.find(round => round.mapNumber === map);
       if (!score) return `<td><span class="score-empty" aria-label="${dates[index] > league.config.today ? 'Upcoming map' : 'No score submitted'}">${dates[index] > league.config.today ? '·' : '–'}</span></td>`;
       if (score.assigned) return `<td><button class="score-button assigned-score" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots assigned. Did not finish. View calculation.">${score.total}<small>DNF</small></button></td>`;
@@ -201,11 +204,10 @@ function renderScorecard() {
     }).join('')}<td class="score-total">${row.rounds.length ? row.total : '–'}<small>${row.rounds.filter(round => !round.assigned).length}/${dates.length} played${row.rounds.some(round => round.assigned) ? `<br>${row.rounds.filter(round => round.assigned).length} assigned` : ''}</small></td></tr>`;
   }).join('') || '<tr><td colspan="8" class="empty-message">No scores submitted.</td></tr>';
   $('#completion-note').textContent = `${rows.filter(row => row.rounds.length).length} players · ${dueDates.length} of ${dates.length} days due`;
-  const complete = rows.filter(row => row.complete);
-  const leaders = complete.filter(row => row.rank === 1);
   const leaderLabel = isCurrent ? 'Leader' : 'Winner';
-  const leaderNames = leaders.length ? leaders.map(row => row.player.name).join(' & ') : 'No eligible player';
-  const leaderDetail = leaders.length ? `${leaders[0].total} shots${leaders.length > 1 ? ' · tied' : ''}` : 'Complete all due rounds';
+  const leaderNames = leaders.length ? leaders.map(row => row.player.name).join(' & ') : isCurrent ? 'No scores yet' : 'No eligible player';
+  const leaderDetail = leaders.length ? `${leaders[0].total} shots${leaders.length > 1 ? ' · tied' : ''}${leaders[0].rank === null ? ' · provisional' : ''}`
+    : isCurrent ? 'Submit a score to start the week' : 'Complete all due rounds';
   const lowest = Math.min(...rows.flatMap(row => row.rounds.filter(round => !round.assigned).map(round => round.total)));
   const bestRounds = rows.flatMap(row => row.rounds.filter(round => !round.assigned && round.total === lowest).map(round => ({ ...round, name: row.player.name })));
   const bestNames = [...new Set(bestRounds.map(round => round.name))];
