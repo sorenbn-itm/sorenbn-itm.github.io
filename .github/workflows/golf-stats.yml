@@ -4,7 +4,9 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '17 5,11,17,23 * * *'
+    # The new map opens at 04:00 UTC. Collect repeatedly before 08:00 Copenhagen time.
+    - cron: '17,47 4,5 * * *'
+    - cron: '17 11,17,23 * * *'
   workflow_dispatch:
 
 permissions:
