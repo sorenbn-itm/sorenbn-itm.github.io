@@ -182,7 +182,7 @@ function renderScorecard() {
   $('#previous-week').disabled = selectedStart <= firstStart;
   $('#next-week').disabled = isCurrent;
   $('#current-week').disabled = isCurrent;
-  $('#table-caption').textContent = `Scores for ${rangeLabel(selectedStart)}. Fewer shots is better. DNF means did not finish; assigned scores count toward weekly totals. Select a score for details.`;
+  $('#table-caption').textContent = `Scores for ${rangeLabel(selectedStart)}. Fewer shots is better. Signed numbers beside submitted scores show shots against par. DNF means did not finish; assigned scores count toward weekly totals. Select a score for details.`;
   $('#score-head').innerHTML = `<tr><th scope="col"><span class="sr-only">Place</span>#</th><th scope="col">PLAYER</th>${dates.map((date, index) =>
     `<th scope="col" class="${date === league.config.today ? 'today' : ''}">${formatDate(date, { weekday: 'short' }).toUpperCase()}<small title="Map #${maps[index]}">${formatDate(date, { day: 'numeric', month: 'short' })}</small><small>${courseForMap(league, maps[index]) ? `${courseForMap(league, maps[index]).source === 'sample' ? 'Sample ' : ''}Par ${courseForMap(league, maps[index]).par}` : 'Par –'}</small></th>`).join('')}<th scope="col">TOTAL</th></tr>`;
   $('#score-body').innerHTML = rows.map(row => {
@@ -192,7 +192,12 @@ function renderScorecard() {
       if (!score) return `<td><span class="score-empty" aria-label="${dates[index] > league.config.today ? 'Upcoming map' : 'No score submitted'}">${dates[index] > league.config.today ? '·' : '–'}</span></td>`;
       if (score.assigned) return `<td><button class="score-button assigned-score" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots assigned. Did not finish. View calculation.">${score.total}<small>DNF</small></button></td>`;
       const best = score.total === bestByMap[map];
-      return `<td><button class="score-button ${best ? 'best-score' : ''}" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots${best ? ', daily best' : ''}. View checkpoints.">${score.total}</button></td>`;
+      const course = courseForMap(league, map);
+      const difference = course ? score.total - course.par : null;
+      const parLabel = difference === null ? '' : difference === 0 ? 'even par'
+        : `${Math.abs(difference)} shot${Math.abs(difference) === 1 ? '' : 's'} ${difference < 0 ? 'under' : 'over'} par`;
+      const comparison = difference === null ? '' : `<span class="score-par ${difference < 0 ? 'under-par' : difference > 0 ? 'over-par' : ''}" title="${parLabel} (par ${course.par})" aria-hidden="true">${difference === 0 ? '±0' : signed(difference)}</span>`;
+      return `<td><span class="score-with-par"><button class="score-button ${best ? 'best-score' : ''}" data-player="${escapeHtml(row.player.id)}" data-map="${map}" aria-label="${escapeHtml(row.player.name)}, map ${map}, ${score.total} shots${parLabel ? `, ${parLabel}` : ''}${best ? ', daily best' : ''}. View checkpoints.">${score.total}</button>${comparison}</span></td>`;
     }).join('')}<td class="score-total">${row.rounds.length ? row.total : '–'}<small>${row.rounds.filter(round => !round.assigned).length}/${dates.length} played${row.rounds.some(round => round.assigned) ? `<br>${row.rounds.filter(round => round.assigned).length} assigned` : ''}</small></td></tr>`;
   }).join('') || '<tr><td colspan="8" class="empty-message">No scores submitted.</td></tr>';
   $('#completion-note').textContent = `${rows.filter(row => row.rounds.length).length} players · ${dueDates.length} of ${dates.length} days due`;

@@ -84,7 +84,7 @@ h2 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.4px; }
 .icon-button:hover:not(:disabled) { background: var(--raised); }
 .small-link { padding: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .table-scroll { overflow-x: auto; }
-table { width: 100%; min-width: 620px; table-layout: fixed; border-collapse: collapse; text-align: center; font-size: 13px; }
+table { width: 100%; min-width: 700px; table-layout: fixed; border-collapse: collapse; text-align: center; font-size: 13px; }
 th { padding: 15px 4px; color: var(--muted); font-size: 11px; font-weight: 500; background: var(--raised); }
 th:first-child { width: 42px; }
 th:nth-child(2) { width: 174px; text-align: left; }
@@ -101,6 +101,11 @@ tr.own-row { background: var(--own); }
 .score-button { width: 33px; height: 33px; border-radius: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
 .score-button:hover { background: var(--raised); box-shadow: 0 0 0 1px var(--line); }
 .score-button.best-score { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.score-with-par { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.score-with-par .score-button { flex-shrink: 0; }
+.score-par { color: var(--muted); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.score-par.under-par { color: var(--accent); }
+.score-par.over-par { color: var(--error); }
 .score-button.assigned-score { width: 42px; height: 42px; color: var(--error); background: var(--error-soft); border: 1px dashed currentColor; line-height: 1.1; }
 .assigned-score small { display: block; font-size: 8px; margin-top: 3px; }
 .assigned-key, .assigned-total { color: var(--error); }
