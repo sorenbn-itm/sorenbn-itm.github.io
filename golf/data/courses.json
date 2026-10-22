@@ -5488,10 +5488,10 @@
       "mapNumber": 568,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-10-22T15:56:02.881Z",
+      "fetchedAt": "2026-10-22T20:37:01.231Z",
       "par": 13,
-      "averageScore": 12.889484685994729,
-      "percentFinished": 88,
+      "averageScore": 12.931099791013585,
+      "percentFinished": 87,
       "minScore": 4,
       "maxScore": 93,
       "percentiles": {
@@ -5524,55 +5524,55 @@
           "repeat": 9
         },
         "8": {
-          "first": 6,
+          "first": 5,
           "repeat": 16
         },
         "9": {
-          "first": 13,
+          "first": 12,
           "repeat": 24
         },
         "10": {
-          "first": 21,
+          "first": 20,
           "repeat": 33
         },
         "11": {
-          "first": 30,
+          "first": 29,
           "repeat": 42
         },
         "12": {
-          "first": 40,
+          "first": 39,
           "repeat": 51
         },
         "13": {
-          "first": 49,
-          "repeat": 59
+          "first": 48,
+          "repeat": 58
         },
         "14": {
           "first": 57,
           "repeat": 66
         },
         "15": {
-          "first": 64,
-          "repeat": 72
+          "first": 63,
+          "repeat": 71
         },
         "16": {
           "first": 70,
-          "repeat": 77
+          "repeat": 76
         },
         "17": {
           "first": 75,
-          "repeat": 81
+          "repeat": 80
         },
         "18": {
           "first": 79,
           "repeat": 84
         },
         "19": {
-          "first": 83,
-          "repeat": 87
+          "first": 82,
+          "repeat": 86
         },
         "20": {
-          "first": 86,
+          "first": 85,
           "repeat": 89
         },
         "21": {
@@ -5585,7 +5585,7 @@
         },
         "23": {
           "first": 92,
-          "repeat": 94
+          "repeat": 93
         },
         "24": {
           "first": 93,
@@ -5593,14 +5593,14 @@
         },
         "25": {
           "first": 94,
-          "repeat": 96
+          "repeat": 95
         },
         "26": {
           "first": 95,
           "repeat": 96
         },
         "27": {
-          "first": 96,
+          "first": 95,
           "repeat": 97
         },
         "28": {
