@@ -94,6 +94,41 @@ test('ties use competition ranks and daily best includes all submitted rounds', 
   assert.equal(result.bestByMap[562], null);
 });
 
+test('equal weekly totals sort by daily wins before name, including shared daily bests', () => {
+  const league = leagueFor([[20, 20, 20, 20], [10, 10, 40, 20], [20, 20, 20, 20],
+    [21, 21, 21, 21], [19, 19, 21, 20]]);
+  ['Alpha', 'Zulu', 'Bravo', 'Aardvark', 'Charlie'].forEach((name, index) => {
+    league.players[index].name = name;
+  });
+  const { rows } = standingsForWeek(league, '2026-10-12');
+  assert.deepEqual(rows.map(row => [row.player.name, row.total, row.dailyWins, row.rank]), [
+    ['Charlie', 79, 1, 1], ['Zulu', 80, 3, 2], ['Alpha', 80, 2, 2],
+    ['Bravo', 80, 2, 2], ['Aardvark', 84, 0, 5],
+  ]);
+});
+
+test('daily wins keep players missing today behind complete players', () => {
+  const league = leagueFor([[20, 20, 20, 20], [1, 1, 1], [1, 2, 2]]);
+  ['Zulu', 'Charlie', 'Alpha'].forEach((name, index) => {
+    league.players[index].name = name;
+  });
+  const { rows } = standingsForWeek(league, '2026-10-12');
+  assert.deepEqual(rows.map(row => [row.player.name, row.dailyWins, row.rank]),
+    [['Zulu', 1, 1], ['Charlie', 3, null], ['Alpha', 1, null]]);
+});
+
+test('daily wins break provisional ties using only submitted due rounds in the selected week', () => {
+  const league = leagueFor([[null, 10, 10, 40, 1], [null, 20, 20, 20, 2]]);
+  league.players[0].name = 'Zulu';
+  league.players[1].name = 'Alpha';
+  league.scores.push({ playerId: '1', mapNumber: 557, total: 1 },
+    { playerId: '1', mapNumber: 560, total: 1, assigned: true });
+  const { rows } = standingsForWeek(league, '2026-10-12');
+  assert.deepEqual(rows.map(row => [row.player.name, row.total, row.dailyWins, row.rank]),
+    [['Zulu', 60, 2, null], ['Alpha', 60, 1, null]]);
+  assert.ok(rows.every(row => !row.complete));
+});
+
 test('weekly leaders include tied provisional leaders when earlier days have no scores', () => {
   const league = leagueFor([[null, null, null, 25, 24], [null, null, null, 21, 28],
     [null, null, null, 29, 29], [null, null, null, 37, 62]], '2026-10-16');

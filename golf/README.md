@@ -95,7 +95,7 @@ The browser reads game statistics from the checked-in JSON feed, avoiding cross-
 - Assigned scores appear in red with `DNF` (did not finish). Their details show the highest submitted score and the added stroke. Weekly totals show played and assigned round counts separately.
 - Assignments are calculated from submissions when standings are read, including archived weeks. They are not stored as submissions and have no checkpoints. Multiple absent players receive the same score; assignments never become the baseline for another assignment. Late submissions replace assignments and recalculate any assignments based on the day's highest score.
 - Players with pending due rounds appear below the rankings, ordered by rounds counted, then total. Pending rounds do not count as zero.
-- Equal totals share a place. The archive shows every tied winner and loser. A sole eligible player is the winner and has no loser.
+- Equal totals share a place and are ordered by most days with the lowest submitted score that week, including shared daily bests, then by name. Assigned scores do not count as daily bests. The archive shows every tied winner and loser. A sole eligible player is the winner and has no loser.
 - One submission per player per map. Scores are final: duplicate writes are rejected by the adapter. There is no update operation.
 - Missing earlier weekday scores in the season can be submitted before the current map is submitted. They recalculate assignments and archived awards. Existing submissions cannot be changed.
 - Checkpoint counts vary by map. A checkpoint dash means skipped, not zero shots. The reported total must equal the numeric checkpoint shots.

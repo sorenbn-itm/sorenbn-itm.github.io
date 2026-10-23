@@ -96,6 +96,10 @@ export function standingsForWeek(league, start) {
   const maps = dates.map(date => mapForDate(date, league.config));
   const dueMaps = dueDates.map(date => mapForDate(date, league.config));
   const submittedScores = league.scores.filter(score => !score.assigned && dueMaps.includes(score.mapNumber));
+  const bestByMap = Object.fromEntries(maps.map(map => {
+    const totals = submittedScores.filter(score => score.mapNumber === map).map(score => score.total);
+    return [map, totals.length ? Math.min(...totals) : null];
+  }));
   const scores = [...submittedScores];
   for (const date of dates.filter(date => date < league.config.today)) {
     const mapNumber = mapForDate(date, league.config);
@@ -113,10 +117,12 @@ export function standingsForWeek(league, start) {
     const rounds = scores.filter(score => score.playerId === player.id);
     const total = rounds.reduce((sum, round) => sum + round.total, 0);
     const complete = dueDates.length > 0 && rounds.length === dueDates.length;
-    return { player, rounds, total, complete, rank: null };
+    const dailyWins = rounds.filter(round => !round.assigned && round.total === bestByMap[round.mapNumber]).length;
+    return { player, rounds, total, complete, dailyWins, rank: null };
   }).filter(row => row.rounds.length || row.player.id === league.identity?.id);
   rows.sort((a, b) => Number(b.complete) - Number(a.complete)
     || (a.complete ? a.total - b.total : b.rounds.length - a.rounds.length || a.total - b.total)
+    || b.dailyWins - a.dailyWins
     || a.player.name.localeCompare(b.player.name));
   let lastTotal;
   let lastRank;
@@ -128,10 +134,6 @@ export function standingsForWeek(league, start) {
   const first = rows[0];
   const leaders = first?.rounds.length
     ? rows.filter(row => row.rounds.length === first.rounds.length && row.total === first.total) : [];
-  const bestByMap = Object.fromEntries(maps.map(map => {
-    const totals = submittedScores.filter(score => score.mapNumber === map).map(score => score.total);
-    return [map, totals.length ? Math.min(...totals) : null];
-  }));
   return { dates, maps, dueDates, rows, leaders, bestByMap, scores };
 }
 
