@@ -87,6 +87,14 @@ The collector reads the public game page and its current JavaScript module, disc
 
 The browser reads game statistics from the checked-in JSON feed, avoiding cross-origin game requests. If the feed fails, score entry and league statistics remain available; game data is marked unavailable. Global statistics are never fabricated when a snapshot is missing. The archive begins when collection starts; this collector cannot backfill past game statistics.
 
+### Pages deployment conflicts
+
+Use **Settings → Pages → Build and deployment → Source → GitHub Actions**, not **Deploy from a branch**. Branch publishing starts GitHub's automatic **pages build and deployment** workflow alongside **Golf statistics and Pages**. The two publishers can collide with `due to in progress deployment` errors or overwrite each other's published files. `actions/configure-pages` does not change the source of an existing Pages site. The deploy job checks this setting after collection, so a configuration error does not prevent saving a daily snapshot.
+
+After switching the source, let any running Pages deployments finish, then run **Golf statistics and Pages → Run workflow** on `main` to collect and publish a fresh snapshot. There is no need to create another Pages workflow or rerun the automatic branch publisher. Deployments in the custom workflow use the `pages` concurrency group without canceling a deployment in progress; this does not coordinate with the automatic branch publisher, which must be disabled by changing the source.
+
+To distinguish collection failures from publishing failures, inspect the **collect** job and the latest `fetchedAt` in `golf/data/courses.json`, then compare it with `/golf/data/courses.json` on the published site. A failed deployment does not undo a snapshot already committed by the collection job. If scheduled morning runs are missing or start late while manual runs succeed, that is a scheduler delay, separate from a Pages conflict. GitHub Actions schedules are best effort; repeated cron entries do not guarantee a morning deadline.
+
 ## League rules
 
 - Weeks run Monday through Friday in Europe/Copenhagen, including daylight-saving changes. Lowest total wins. Played and assigned scores count toward all due rounds for ranking. During the week, rankings are provisional.
