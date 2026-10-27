@@ -9314,10 +9314,10 @@
       "mapNumber": 573,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-10-27T16:45:09.599Z",
+      "fetchedAt": "2026-10-27T21:24:52.171Z",
       "par": 15,
-      "averageScore": 15.33770573982789,
-      "percentFinished": 86,
+      "averageScore": 15.366043425814235,
+      "percentFinished": 85,
       "minScore": 3,
       "maxScore": 183,
       "percentiles": {
@@ -9358,12 +9358,12 @@
           "repeat": 24
         },
         "10": {
-          "first": 16,
+          "first": 15,
           "repeat": 31
         },
         "11": {
-          "first": 22,
-          "repeat": 38
+          "first": 21,
+          "repeat": 37
         },
         "12": {
           "first": 28,
@@ -9371,22 +9371,22 @@
         },
         "13": {
           "first": 34,
-          "repeat": 49
+          "repeat": 50
         },
         "14": {
-          "first": 40,
+          "first": 39,
           "repeat": 55
         },
         "15": {
-          "first": 46,
+          "first": 45,
           "repeat": 60
         },
         "16": {
-          "first": 52,
+          "first": 51,
           "repeat": 64
         },
         "17": {
-          "first": 57,
+          "first": 56,
           "repeat": 68
         },
         "18": {
@@ -9398,27 +9398,27 @@
           "repeat": 75
         },
         "20": {
-          "first": 69,
-          "repeat": 78
+          "first": 68,
+          "repeat": 77
         },
         "21": {
-          "first": 72,
+          "first": 71,
           "repeat": 80
         },
         "22": {
-          "first": 75,
+          "first": 74,
           "repeat": 82
         },
         "23": {
-          "first": 78,
+          "first": 77,
           "repeat": 84
         },
         "24": {
-          "first": 80,
+          "first": 79,
           "repeat": 86
         },
         "25": {
-          "first": 82,
+          "first": 81,
           "repeat": 87
         },
         "26": {
@@ -9427,10 +9427,10 @@
         },
         "27": {
           "first": 85,
-          "repeat": 90
+          "repeat": 89
         },
         "28": {
-          "first": 87,
+          "first": 86,
           "repeat": 91
         },
         "29": {
@@ -9439,7 +9439,7 @@
         },
         "30": {
           "first": 89,
-          "repeat": 93
+          "repeat": 92
         },
         "31": {
           "first": 90,
@@ -9467,7 +9467,7 @@
         },
         "37": {
           "first": 95,
-          "repeat": 97
+          "repeat": 96
         },
         "38": {
           "first": 95,
