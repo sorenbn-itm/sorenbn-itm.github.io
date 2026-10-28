@@ -10060,10 +10060,10 @@
       "mapNumber": 574,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-10-28T17:13:12.660Z",
+      "fetchedAt": "2026-10-28T21:44:22.077Z",
       "par": 18,
-      "averageScore": 18.37507152393668,
-      "percentFinished": 86,
+      "averageScore": 18.497620380739082,
+      "percentFinished": 85,
       "minScore": 5,
       "maxScore": 136,
       "percentiles": {
@@ -10108,11 +10108,11 @@
           "repeat": 7
         },
         "11": {
-          "first": 5,
+          "first": 4,
           "repeat": 11
         },
         "12": {
-          "first": 9,
+          "first": 8,
           "repeat": 17
         },
         "13": {
@@ -10120,111 +10120,111 @@
           "repeat": 23
         },
         "14": {
-          "first": 21,
+          "first": 20,
           "repeat": 30
         },
         "15": {
-          "first": 28,
-          "repeat": 37
+          "first": 27,
+          "repeat": 36
         },
         "16": {
-          "first": 35,
-          "repeat": 44
+          "first": 34,
+          "repeat": 43
         },
         "17": {
-          "first": 42,
+          "first": 40,
           "repeat": 50
         },
         "18": {
-          "first": 48,
+          "first": 47,
           "repeat": 56
         },
         "19": {
-          "first": 55,
-          "repeat": 62
+          "first": 54,
+          "repeat": 61
         },
         "20": {
-          "first": 60,
-          "repeat": 67
+          "first": 59,
+          "repeat": 66
         },
         "21": {
-          "first": 65,
-          "repeat": 71
+          "first": 64,
+          "repeat": 70
         },
         "22": {
-          "first": 70,
-          "repeat": 75
+          "first": 69,
+          "repeat": 74
         },
         "23": {
-          "first": 74,
+          "first": 73,
           "repeat": 78
         },
         "24": {
-          "first": 77,
-          "repeat": 81
+          "first": 76,
+          "repeat": 80
         },
         "25": {
-          "first": 80,
-          "repeat": 84
+          "first": 79,
+          "repeat": 83
         },
         "26": {
-          "first": 83,
-          "repeat": 86
+          "first": 82,
+          "repeat": 85
         },
         "27": {
-          "first": 85,
-          "repeat": 88
+          "first": 84,
+          "repeat": 87
         },
         "28": {
-          "first": 87,
+          "first": 86,
           "repeat": 89
         },
         "29": {
-          "first": 89,
-          "repeat": 91
+          "first": 88,
+          "repeat": 90
         },
         "30": {
           "first": 90,
           "repeat": 92
         },
         "31": {
-          "first": 92,
+          "first": 91,
           "repeat": 93
         },
         "32": {
-          "first": 93,
+          "first": 92,
           "repeat": 94
         },
         "33": {
-          "first": 94,
+          "first": 93,
           "repeat": 95
         },
         "34": {
           "first": 94,
-          "repeat": 96
+          "repeat": 95
         },
         "35": {
           "first": 95,
           "repeat": 96
         },
         "36": {
-          "first": 96,
-          "repeat": 97
+          "first": 95,
+          "repeat": 96
         },
         "37": {
-          "first": 97,
+          "first": 96,
           "repeat": 97
         },
         "38": {
           "first": 97,
-          "repeat": 98
+          "repeat": 97
         },
         "39": {
           "first": 97,
           "repeat": 98
         },
         "40": {
-          "first": 98,
+          "first": 97,
           "repeat": 98
         },
         "41": {
@@ -10236,7 +10236,7 @@
           "repeat": 99
         },
         "43": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "44": {
@@ -10256,7 +10256,7 @@
           "repeat": 99
         },
         "48": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "49": {
