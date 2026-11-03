@@ -14954,9 +14954,9 @@
       "mapNumber": 579,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-11-02T20:51:15.654Z",
+      "fetchedAt": "2026-11-03T03:58:34.239Z",
       "par": 31,
-      "averageScore": 30.70355035710589,
+      "averageScore": 30.9911438503559,
       "percentFinished": 67,
       "minScore": 1,
       "maxScore": 193,
@@ -14999,7 +14999,7 @@
         },
         "10": {
           "first": 1,
-          "repeat": 1
+          "repeat": 2
         },
         "11": {
           "first": 1,
@@ -15010,7 +15010,7 @@
           "repeat": 4
         },
         "13": {
-          "first": 2,
+          "first": 1,
           "repeat": 6
         },
         "14": {
@@ -15018,7 +15018,7 @@
           "repeat": 8
         },
         "15": {
-          "first": 4,
+          "first": 3,
           "repeat": 10
         },
         "16": {
@@ -15035,7 +15035,7 @@
         },
         "19": {
           "first": 12,
-          "repeat": 22
+          "repeat": 23
         },
         "20": {
           "first": 15,
@@ -15043,14 +15043,14 @@
         },
         "21": {
           "first": 19,
-          "repeat": 29
+          "repeat": 30
         },
         "22": {
           "first": 22,
           "repeat": 33
         },
         "23": {
-          "first": 26,
+          "first": 25,
           "repeat": 36
         },
         "24": {
@@ -15058,163 +15058,163 @@
           "repeat": 39
         },
         "25": {
-          "first": 33,
+          "first": 32,
           "repeat": 43
         },
         "26": {
-          "first": 36,
+          "first": 35,
           "repeat": 46
         },
         "27": {
-          "first": 39,
+          "first": 38,
           "repeat": 49
         },
         "28": {
-          "first": 42,
+          "first": 41,
           "repeat": 52
         },
         "29": {
-          "first": 46,
+          "first": 45,
           "repeat": 55
         },
         "30": {
-          "first": 49,
+          "first": 48,
           "repeat": 57
         },
         "31": {
-          "first": 51,
+          "first": 50,
           "repeat": 60
         },
         "32": {
-          "first": 55,
-          "repeat": 63
+          "first": 54,
+          "repeat": 62
         },
         "33": {
-          "first": 58,
+          "first": 56,
           "repeat": 65
         },
         "34": {
-          "first": 60,
-          "repeat": 68
+          "first": 59,
+          "repeat": 67
         },
         "35": {
-          "first": 63,
-          "repeat": 70
+          "first": 62,
+          "repeat": 69
         },
         "36": {
-          "first": 65,
-          "repeat": 72
+          "first": 64,
+          "repeat": 71
         },
         "37": {
-          "first": 67,
-          "repeat": 74
+          "first": 66,
+          "repeat": 73
         },
         "38": {
-          "first": 69,
+          "first": 68,
           "repeat": 75
         },
         "39": {
-          "first": 71,
-          "repeat": 77
+          "first": 70,
+          "repeat": 76
         },
         "40": {
-          "first": 73,
+          "first": 72,
           "repeat": 78
         },
         "41": {
-          "first": 75,
-          "repeat": 80
+          "first": 74,
+          "repeat": 79
         },
         "42": {
-          "first": 76,
+          "first": 75,
           "repeat": 81
         },
         "43": {
+          "first": 77,
+          "repeat": 82
+        },
+        "44": {
           "first": 78,
           "repeat": 83
         },
-        "44": {
+        "45": {
           "first": 80,
           "repeat": 84
         },
-        "45": {
+        "46": {
           "first": 81,
           "repeat": 85
         },
-        "46": {
+        "47": {
           "first": 82,
           "repeat": 86
         },
-        "47": {
+        "48": {
           "first": 83,
           "repeat": 87
         },
-        "48": {
-          "first": 84,
-          "repeat": 87
-        },
         "49": {
-          "first": 85,
+          "first": 84,
           "repeat": 88
         },
         "50": {
-          "first": 86,
+          "first": 85,
           "repeat": 89
         },
         "51": {
-          "first": 88,
+          "first": 87,
           "repeat": 90
         },
         "52": {
           "first": 88,
-          "repeat": 91
+          "repeat": 90
         },
         "53": {
-          "first": 89,
-          "repeat": 92
+          "first": 88,
+          "repeat": 91
         },
         "54": {
+          "first": 89,
+          "repeat": 91
+        },
+        "55": {
           "first": 90,
           "repeat": 92
         },
-        "55": {
-          "first": 91,
-          "repeat": 93
-        },
         "56": {
-          "first": 91,
-          "repeat": 93
+          "first": 90,
+          "repeat": 92
         },
         "57": {
-          "first": 92,
+          "first": 91,
           "repeat": 93
         },
         "58": {
+          "first": 91,
+          "repeat": 93
+        },
+        "59": {
           "first": 92,
           "repeat": 94
         },
-        "59": {
-          "first": 93,
-          "repeat": 95
-        },
         "60": {
           "first": 93,
-          "repeat": 95
+          "repeat": 94
         },
         "61": {
-          "first": 94,
+          "first": 93,
           "repeat": 95
         },
         "62": {
           "first": 94,
-          "repeat": 96
+          "repeat": 95
         },
         "63": {
-          "first": 95,
-          "repeat": 96
+          "first": 94,
+          "repeat": 95
         },
         "64": {
-          "first": 95,
+          "first": 94,
           "repeat": 96
         },
         "65": {
@@ -15222,12 +15222,12 @@
           "repeat": 96
         },
         "66": {
-          "first": 96,
-          "repeat": 97
+          "first": 95,
+          "repeat": 96
         },
         "67": {
-          "first": 96,
-          "repeat": 97
+          "first": 95,
+          "repeat": 96
         },
         "68": {
           "first": 96,
@@ -15238,12 +15238,12 @@
           "repeat": 97
         },
         "70": {
-          "first": 97,
+          "first": 96,
           "repeat": 97
         },
         "71": {
           "first": 97,
-          "repeat": 98
+          "repeat": 97
         },
         "72": {
           "first": 97,
@@ -15254,11 +15254,11 @@
           "repeat": 98
         },
         "74": {
-          "first": 98,
+          "first": 97,
           "repeat": 98
         },
         "75": {
-          "first": 98,
+          "first": 97,
           "repeat": 98
         },
         "76": {
@@ -15267,26 +15267,26 @@
         },
         "77": {
           "first": 98,
-          "repeat": 99
+          "repeat": 98
         },
         "78": {
           "first": 98,
-          "repeat": 99
+          "repeat": 98
         },
         "79": {
           "first": 98,
           "repeat": 99
         },
         "80": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "81": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "82": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "83": {
@@ -15311,30 +15311,30 @@
         },
         "88": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "89": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "90": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "91": {
           "first": 99,
           "repeat": 100
         },
         "92": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "93": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "94": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "95": {
