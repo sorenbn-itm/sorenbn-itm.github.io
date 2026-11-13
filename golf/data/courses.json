@@ -25298,9 +25298,9 @@
       "mapNumber": 589,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-11-12T19:08:47.127Z",
-      "par": 19,
-      "averageScore": 19.37024252080014,
+      "fetchedAt": "2026-11-13T03:36:48.366Z",
+      "par": 20,
+      "averageScore": 19.67231132979743,
       "percentFinished": 84,
       "minScore": 4,
       "maxScore": 500,
@@ -25335,14 +25335,14 @@
         },
         "8": {
           "first": 1,
-          "repeat": 1
+          "repeat": 2
         },
         "9": {
           "first": 1,
           "repeat": 4
         },
         "10": {
-          "first": 3,
+          "first": 2,
           "repeat": 7
         },
         "11": {
@@ -25354,107 +25354,107 @@
           "repeat": 16
         },
         "13": {
-          "first": 15,
+          "first": 14,
           "repeat": 22
         },
         "14": {
-          "first": 20,
+          "first": 19,
           "repeat": 28
         },
         "15": {
-          "first": 27,
-          "repeat": 35
+          "first": 26,
+          "repeat": 34
         },
         "16": {
-          "first": 34,
-          "repeat": 41
+          "first": 32,
+          "repeat": 40
         },
         "17": {
-          "first": 40,
-          "repeat": 48
+          "first": 38,
+          "repeat": 46
         },
         "18": {
-          "first": 46,
-          "repeat": 53
+          "first": 44,
+          "repeat": 52
         },
         "19": {
-          "first": 52,
-          "repeat": 58
+          "first": 50,
+          "repeat": 57
         },
         "20": {
-          "first": 57,
-          "repeat": 63
+          "first": 55,
+          "repeat": 61
         },
         "21": {
-          "first": 62,
-          "repeat": 67
+          "first": 60,
+          "repeat": 66
         },
         "22": {
-          "first": 66,
-          "repeat": 71
+          "first": 64,
+          "repeat": 69
         },
         "23": {
-          "first": 70,
-          "repeat": 74
+          "first": 68,
+          "repeat": 73
         },
         "24": {
-          "first": 73,
-          "repeat": 77
+          "first": 71,
+          "repeat": 76
         },
         "25": {
-          "first": 76,
-          "repeat": 80
+          "first": 74,
+          "repeat": 78
         },
         "26": {
-          "first": 79,
-          "repeat": 82
+          "first": 77,
+          "repeat": 81
         },
         "27": {
-          "first": 81,
-          "repeat": 84
+          "first": 80,
+          "repeat": 83
         },
         "28": {
+          "first": 82,
+          "repeat": 85
+        },
+        "29": {
           "first": 84,
           "repeat": 86
         },
-        "29": {
-          "first": 85,
-          "repeat": 87
-        },
         "30": {
+          "first": 86,
+          "repeat": 88
+        },
+        "31": {
           "first": 87,
           "repeat": 89
         },
-        "31": {
+        "32": {
           "first": 88,
           "repeat": 90
         },
-        "32": {
+        "33": {
           "first": 90,
           "repeat": 91
         },
-        "33": {
+        "34": {
           "first": 91,
           "repeat": 92
         },
-        "34": {
+        "35": {
           "first": 92,
           "repeat": 93
-        },
-        "35": {
-          "first": 93,
-          "repeat": 94
         },
         "36": {
           "first": 93,
           "repeat": 94
         },
         "37": {
-          "first": 94,
-          "repeat": 95
+          "first": 93,
+          "repeat": 94
         },
         "38": {
-          "first": 95,
+          "first": 94,
           "repeat": 95
         },
         "39": {
@@ -25462,7 +25462,7 @@
           "repeat": 96
         },
         "40": {
-          "first": 96,
+          "first": 95,
           "repeat": 96
         },
         "41": {
@@ -25470,19 +25470,19 @@
           "repeat": 97
         },
         "42": {
-          "first": 97,
+          "first": 96,
           "repeat": 97
         },
         "43": {
           "first": 97,
-          "repeat": 98
+          "repeat": 97
         },
         "44": {
           "first": 97,
           "repeat": 98
         },
         "45": {
-          "first": 98,
+          "first": 97,
           "repeat": 98
         },
         "46": {
@@ -25491,14 +25491,14 @@
         },
         "47": {
           "first": 98,
-          "repeat": 99
+          "repeat": 98
         },
         "48": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "49": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "50": {
@@ -25523,14 +25523,14 @@
         },
         "55": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "56": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "57": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "58": {
