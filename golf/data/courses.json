@@ -32048,6 +32048,320 @@
           "repeat": 100
         }
       }
+    },
+    {
+      "courseDate": "2026-11-18",
+      "mapNumber": 595,
+      "source": "game",
+      "sourceUrl": "https://kindahardgolf.com/",
+      "fetchedAt": "2026-11-18T04:32:55.936Z",
+      "par": 21,
+      "averageScore": 20.856603773584904,
+      "percentFinished": 73,
+      "minScore": 6,
+      "maxScore": 75,
+      "percentiles": {
+        "1": {
+          "first": 0,
+          "repeat": 0
+        },
+        "2": {
+          "first": 0,
+          "repeat": 0
+        },
+        "3": {
+          "first": 0,
+          "repeat": 0
+        },
+        "4": {
+          "first": 0,
+          "repeat": 0
+        },
+        "5": {
+          "first": 0,
+          "repeat": 0
+        },
+        "6": {
+          "first": 0,
+          "repeat": 0
+        },
+        "7": {
+          "first": 0,
+          "repeat": 1
+        },
+        "8": {
+          "first": 0,
+          "repeat": 2
+        },
+        "9": {
+          "first": 2,
+          "repeat": 4
+        },
+        "10": {
+          "first": 3,
+          "repeat": 6
+        },
+        "11": {
+          "first": 6,
+          "repeat": 12
+        },
+        "12": {
+          "first": 8,
+          "repeat": 15
+        },
+        "13": {
+          "first": 10,
+          "repeat": 17
+        },
+        "14": {
+          "first": 12,
+          "repeat": 22
+        },
+        "15": {
+          "first": 17,
+          "repeat": 27
+        },
+        "16": {
+          "first": 22,
+          "repeat": 31
+        },
+        "17": {
+          "first": 30,
+          "repeat": 39
+        },
+        "18": {
+          "first": 33,
+          "repeat": 43
+        },
+        "19": {
+          "first": 39,
+          "repeat": 50
+        },
+        "20": {
+          "first": 45,
+          "repeat": 55
+        },
+        "21": {
+          "first": 52,
+          "repeat": 61
+        },
+        "22": {
+          "first": 57,
+          "repeat": 65
+        },
+        "23": {
+          "first": 62,
+          "repeat": 70
+        },
+        "24": {
+          "first": 66,
+          "repeat": 73
+        },
+        "25": {
+          "first": 72,
+          "repeat": 78
+        },
+        "26": {
+          "first": 74,
+          "repeat": 80
+        },
+        "27": {
+          "first": 77,
+          "repeat": 83
+        },
+        "28": {
+          "first": 79,
+          "repeat": 84
+        },
+        "29": {
+          "first": 80,
+          "repeat": 85
+        },
+        "30": {
+          "first": 82,
+          "repeat": 86
+        },
+        "31": {
+          "first": 82,
+          "repeat": 86
+        },
+        "32": {
+          "first": 82,
+          "repeat": 86
+        },
+        "33": {
+          "first": 85,
+          "repeat": 88
+        },
+        "34": {
+          "first": 87,
+          "repeat": 90
+        },
+        "35": {
+          "first": 88,
+          "repeat": 91
+        },
+        "36": {
+          "first": 89,
+          "repeat": 92
+        },
+        "37": {
+          "first": 91,
+          "repeat": 93
+        },
+        "38": {
+          "first": 92,
+          "repeat": 94
+        },
+        "39": {
+          "first": 94,
+          "repeat": 95
+        },
+        "40": {
+          "first": 95,
+          "repeat": 96
+        },
+        "41": {
+          "first": 95,
+          "repeat": 96
+        },
+        "42": {
+          "first": 95,
+          "repeat": 96
+        },
+        "43": {
+          "first": 96,
+          "repeat": 97
+        },
+        "44": {
+          "first": 96,
+          "repeat": 97
+        },
+        "45": {
+          "first": 96,
+          "repeat": 97
+        },
+        "46": {
+          "first": 96,
+          "repeat": 98
+        },
+        "47": {
+          "first": 96,
+          "repeat": 98
+        },
+        "48": {
+          "first": 97,
+          "repeat": 98
+        },
+        "49": {
+          "first": 97,
+          "repeat": 98
+        },
+        "50": {
+          "first": 97,
+          "repeat": 98
+        },
+        "51": {
+          "first": 97,
+          "repeat": 98
+        },
+        "52": {
+          "first": 97,
+          "repeat": 98
+        },
+        "53": {
+          "first": 98,
+          "repeat": 98
+        },
+        "54": {
+          "first": 98,
+          "repeat": 98
+        },
+        "55": {
+          "first": 98,
+          "repeat": 98
+        },
+        "56": {
+          "first": 99,
+          "repeat": 99
+        },
+        "57": {
+          "first": 99,
+          "repeat": 99
+        },
+        "58": {
+          "first": 99,
+          "repeat": 99
+        },
+        "59": {
+          "first": 99,
+          "repeat": 99
+        },
+        "60": {
+          "first": 99,
+          "repeat": 99
+        },
+        "61": {
+          "first": 99,
+          "repeat": 99
+        },
+        "62": {
+          "first": 99,
+          "repeat": 99
+        },
+        "63": {
+          "first": 99,
+          "repeat": 99
+        },
+        "64": {
+          "first": 99,
+          "repeat": 99
+        },
+        "65": {
+          "first": 99,
+          "repeat": 99
+        },
+        "66": {
+          "first": 100,
+          "repeat": 100
+        },
+        "67": {
+          "first": 100,
+          "repeat": 100
+        },
+        "68": {
+          "first": 100,
+          "repeat": 100
+        },
+        "69": {
+          "first": 100,
+          "repeat": 100
+        },
+        "70": {
+          "first": 100,
+          "repeat": 100
+        },
+        "71": {
+          "first": 100,
+          "repeat": 100
+        },
+        "72": {
+          "first": 100,
+          "repeat": 100
+        },
+        "73": {
+          "first": 100,
+          "repeat": 100
+        },
+        "74": {
+          "first": 100,
+          "repeat": 100
+        },
+        "75": {
+          "first": 100,
+          "repeat": 100
+        }
+      }
     }
   ]
 }
