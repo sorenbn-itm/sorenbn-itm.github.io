@@ -33880,6 +33880,96 @@
           "repeat": 100
         }
       }
+    },
+    {
+      "courseDate": "2026-11-20",
+      "mapNumber": 597,
+      "source": "game",
+      "sourceUrl": "https://kindahardgolf.com/",
+      "fetchedAt": "2026-11-20T04:02:05.152Z",
+      "par": 17,
+      "averageScore": 16.666666666666668,
+      "percentFinished": 30,
+      "minScore": 15,
+      "maxScore": 19,
+      "percentiles": {
+        "1": {
+          "first": 0,
+          "repeat": 0
+        },
+        "2": {
+          "first": 0,
+          "repeat": 0
+        },
+        "3": {
+          "first": 0,
+          "repeat": 0
+        },
+        "4": {
+          "first": 0,
+          "repeat": 0
+        },
+        "5": {
+          "first": 0,
+          "repeat": 0
+        },
+        "6": {
+          "first": 0,
+          "repeat": 0
+        },
+        "7": {
+          "first": 0,
+          "repeat": 0
+        },
+        "8": {
+          "first": 0,
+          "repeat": 0
+        },
+        "9": {
+          "first": 0,
+          "repeat": 0
+        },
+        "10": {
+          "first": 0,
+          "repeat": 0
+        },
+        "11": {
+          "first": 0,
+          "repeat": 0
+        },
+        "12": {
+          "first": 0,
+          "repeat": 0
+        },
+        "13": {
+          "first": 0,
+          "repeat": 0
+        },
+        "14": {
+          "first": 0,
+          "repeat": 0
+        },
+        "15": {
+          "first": 0,
+          "repeat": 0
+        },
+        "16": {
+          "first": 34,
+          "repeat": 34
+        },
+        "17": {
+          "first": 67,
+          "repeat": 67
+        },
+        "18": {
+          "first": 67,
+          "repeat": 67
+        },
+        "19": {
+          "first": 67,
+          "repeat": 67
+        }
+      }
     }
   ]
 }
