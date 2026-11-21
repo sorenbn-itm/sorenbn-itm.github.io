@@ -34440,10 +34440,10 @@
       "mapNumber": 598,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-11-21T12:45:02.865Z",
+      "fetchedAt": "2026-11-21T18:07:11.152Z",
       "par": 32,
-      "averageScore": 31.805473684210526,
-      "percentFinished": 67,
+      "averageScore": 31.772248374803855,
+      "percentFinished": 68,
       "minScore": 6,
       "maxScore": 200,
       "percentiles": {
@@ -34500,8 +34500,8 @@
           "repeat": 14
         },
         "14": {
-          "first": 7,
-          "repeat": 18
+          "first": 6,
+          "repeat": 17
         },
         "15": {
           "first": 9,
@@ -34516,12 +34516,12 @@
           "repeat": 27
         },
         "18": {
-          "first": 15,
-          "repeat": 29
+          "first": 16,
+          "repeat": 30
         },
         "19": {
-          "first": 18,
-          "repeat": 32
+          "first": 19,
+          "repeat": 33
         },
         "20": {
           "first": 21,
@@ -34549,7 +34549,7 @@
         },
         "26": {
           "first": 36,
-          "repeat": 49
+          "repeat": 50
         },
         "27": {
           "first": 39,
@@ -34564,16 +34564,16 @@
           "repeat": 56
         },
         "30": {
-          "first": 47,
+          "first": 46,
           "repeat": 58
         },
         "31": {
-          "first": 49,
+          "first": 48,
           "repeat": 60
         },
         "32": {
-          "first": 51,
-          "repeat": 62
+          "first": 50,
+          "repeat": 61
         },
         "33": {
           "first": 53,
@@ -34584,11 +34584,11 @@
           "repeat": 65
         },
         "35": {
-          "first": 57,
-          "repeat": 67
+          "first": 56,
+          "repeat": 66
         },
         "36": {
-          "first": 59,
+          "first": 58,
           "repeat": 68
         },
         "37": {
@@ -34600,12 +34600,12 @@
           "repeat": 71
         },
         "39": {
-          "first": 63,
+          "first": 64,
           "repeat": 72
         },
         "40": {
           "first": 65,
-          "repeat": 73
+          "repeat": 74
         },
         "41": {
           "first": 67,
@@ -34616,7 +34616,7 @@
           "repeat": 76
         },
         "43": {
-          "first": 70,
+          "first": 69,
           "repeat": 77
         },
         "44": {
@@ -34624,7 +34624,7 @@
           "repeat": 78
         },
         "45": {
-          "first": 73,
+          "first": 72,
           "repeat": 79
         },
         "46": {
@@ -34632,11 +34632,11 @@
           "repeat": 80
         },
         "47": {
-          "first": 76,
+          "first": 75,
           "repeat": 81
         },
         "48": {
-          "first": 77,
+          "first": 76,
           "repeat": 82
         },
         "49": {
@@ -34653,22 +34653,22 @@
         },
         "52": {
           "first": 81,
-          "repeat": 85
+          "repeat": 86
         },
         "53": {
           "first": 82,
           "repeat": 86
         },
         "54": {
-          "first": 83,
+          "first": 82,
           "repeat": 87
         },
         "55": {
-          "first": 84,
+          "first": 83,
           "repeat": 87
         },
         "56": {
-          "first": 85,
+          "first": 84,
           "repeat": 88
         },
         "57": {
@@ -34676,12 +34676,12 @@
           "repeat": 89
         },
         "58": {
-          "first": 86,
+          "first": 85,
           "repeat": 89
         },
         "59": {
           "first": 86,
-          "repeat": 89
+          "repeat": 90
         },
         "60": {
           "first": 87,
@@ -34689,7 +34689,7 @@
         },
         "61": {
           "first": 87,
-          "repeat": 90
+          "repeat": 91
         },
         "62": {
           "first": 88,
@@ -34697,7 +34697,7 @@
         },
         "63": {
           "first": 89,
-          "repeat": 91
+          "repeat": 92
         },
         "64": {
           "first": 89,
@@ -34709,15 +34709,15 @@
         },
         "66": {
           "first": 90,
-          "repeat": 92
+          "repeat": 93
         },
         "67": {
           "first": 91,
           "repeat": 93
         },
         "68": {
-          "first": 91,
-          "repeat": 93
+          "first": 92,
+          "repeat": 94
         },
         "69": {
           "first": 92,
@@ -34729,7 +34729,7 @@
         },
         "71": {
           "first": 93,
-          "repeat": 94
+          "repeat": 95
         },
         "72": {
           "first": 93,
@@ -34765,7 +34765,7 @@
         },
         "80": {
           "first": 95,
-          "repeat": 96
+          "repeat": 97
         },
         "81": {
           "first": 96,
@@ -34785,7 +34785,7 @@
         },
         "85": {
           "first": 97,
-          "repeat": 97
+          "repeat": 98
         },
         "86": {
           "first": 97,
@@ -34809,7 +34809,7 @@
         },
         "91": {
           "first": 98,
-          "repeat": 99
+          "repeat": 98
         },
         "92": {
           "first": 98,
@@ -34820,15 +34820,15 @@
           "repeat": 99
         },
         "94": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "95": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "96": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "97": {
@@ -34849,30 +34849,30 @@
         },
         "101": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "102": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "103": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "104": {
           "first": 99,
-          "repeat": 100
+          "repeat": 99
         },
         "105": {
           "first": 99,
           "repeat": 100
         },
         "106": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "107": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "108": {
