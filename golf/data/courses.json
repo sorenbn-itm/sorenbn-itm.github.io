@@ -39394,12 +39394,12 @@
       "mapNumber": 603,
       "source": "game",
       "sourceUrl": "https://kindahardgolf.com/",
-      "fetchedAt": "2026-11-26T05:11:55.328Z",
-      "par": 25,
-      "averageScore": 24.623655913978496,
-      "percentFinished": 77,
-      "minScore": 9,
-      "maxScore": 119,
+      "fetchedAt": "2026-11-26T13:58:49.824Z",
+      "par": 26,
+      "averageScore": 26.156770610850064,
+      "percentFinished": 76,
+      "minScore": 4,
+      "maxScore": 180,
       "percentiles": {
         "1": {
           "first": 0,
@@ -39419,274 +39419,274 @@
         },
         "5": {
           "first": 0,
-          "repeat": 0
+          "repeat": 1
         },
         "6": {
           "first": 0,
-          "repeat": 0
+          "repeat": 1
         },
         "7": {
           "first": 0,
-          "repeat": 0
+          "repeat": 1
         },
         "8": {
-          "first": 0,
-          "repeat": 0
+          "first": 1,
+          "repeat": 1
         },
         "9": {
-          "first": 0,
-          "repeat": 0
+          "first": 1,
+          "repeat": 1
         },
         "10": {
           "first": 1,
           "repeat": 2
         },
         "11": {
-          "first": 3,
-          "repeat": 5
+          "first": 2,
+          "repeat": 4
         },
         "12": {
-          "first": 5,
-          "repeat": 8
+          "first": 4,
+          "repeat": 7
         },
         "13": {
-          "first": 9,
-          "repeat": 13
+          "first": 7,
+          "repeat": 11
         },
         "14": {
+          "first": 10,
+          "repeat": 15
+        },
+        "15": {
           "first": 14,
           "repeat": 19
         },
-        "15": {
-          "first": 19,
-          "repeat": 25
-        },
         "16": {
-          "first": 23,
-          "repeat": 30
+          "first": 18,
+          "repeat": 23
         },
         "17": {
-          "first": 27,
-          "repeat": 34
+          "first": 22,
+          "repeat": 28
         },
         "18": {
-          "first": 31,
-          "repeat": 38
+          "first": 27,
+          "repeat": 33
         },
         "19": {
-          "first": 36,
-          "repeat": 42
+          "first": 31,
+          "repeat": 37
         },
         "20": {
-          "first": 40,
-          "repeat": 46
+          "first": 35,
+          "repeat": 41
         },
         "21": {
-          "first": 44,
-          "repeat": 51
+          "first": 39,
+          "repeat": 44
         },
         "22": {
-          "first": 48,
-          "repeat": 54
+          "first": 43,
+          "repeat": 48
         },
         "23": {
-          "first": 51,
-          "repeat": 57
+          "first": 47,
+          "repeat": 52
         },
         "24": {
-          "first": 54,
-          "repeat": 59
+          "first": 50,
+          "repeat": 55
         },
         "25": {
-          "first": 57,
-          "repeat": 63
+          "first": 53,
+          "repeat": 58
         },
         "26": {
-          "first": 60,
-          "repeat": 65
+          "first": 56,
+          "repeat": 60
         },
         "27": {
-          "first": 64,
-          "repeat": 68
+          "first": 59,
+          "repeat": 63
         },
         "28": {
-          "first": 66,
-          "repeat": 71
+          "first": 62,
+          "repeat": 66
         },
         "29": {
-          "first": 67,
-          "repeat": 72
+          "first": 65,
+          "repeat": 68
         },
         "30": {
-          "first": 69,
-          "repeat": 73
+          "first": 68,
+          "repeat": 71
         },
         "31": {
-          "first": 73,
-          "repeat": 77
+          "first": 70,
+          "repeat": 73
         },
         "32": {
-          "first": 75,
-          "repeat": 78
+          "first": 72,
+          "repeat": 75
         },
         "33": {
+          "first": 74,
+          "repeat": 77
+        },
+        "34": {
           "first": 76,
           "repeat": 79
         },
-        "34": {
-          "first": 78,
-          "repeat": 81
-        },
         "35": {
-          "first": 80,
-          "repeat": 82
+          "first": 78,
+          "repeat": 80
         },
         "36": {
+          "first": 79,
+          "repeat": 82
+        },
+        "37": {
+          "first": 81,
+          "repeat": 83
+        },
+        "38": {
           "first": 82,
           "repeat": 84
         },
-        "37": {
-          "first": 83,
-          "repeat": 86
+        "39": {
+          "first": 84,
+          "repeat": 85
         },
-        "38": {
+        "40": {
           "first": 85,
           "repeat": 87
         },
-        "39": {
+        "41": {
           "first": 86,
-          "repeat": 88
+          "repeat": 87
         },
-        "40": {
+        "42": {
           "first": 87,
           "repeat": 89
         },
-        "41": {
-          "first": 88,
-          "repeat": 90
-        },
-        "42": {
-          "first": 89,
-          "repeat": 91
-        },
         "43": {
-          "first": 90,
-          "repeat": 92
+          "first": 88,
+          "repeat": 89
         },
         "44": {
+          "first": 89,
+          "repeat": 90
+        },
+        "45": {
+          "first": 90,
+          "repeat": 91
+        },
+        "46": {
           "first": 91,
           "repeat": 92
         },
-        "45": {
-          "first": 93,
-          "repeat": 94
-        },
-        "46": {
-          "first": 93,
-          "repeat": 94
-        },
         "47": {
-          "first": 93,
-          "repeat": 94
+          "first": 91,
+          "repeat": 92
         },
         "48": {
-          "first": 94,
-          "repeat": 95
+          "first": 92,
+          "repeat": 93
         },
         "49": {
-          "first": 94,
-          "repeat": 95
+          "first": 92,
+          "repeat": 93
         },
         "50": {
-          "first": 94,
-          "repeat": 95
+          "first": 92,
+          "repeat": 93
         },
         "51": {
-          "first": 94,
-          "repeat": 95
+          "first": 93,
+          "repeat": 94
         },
         "52": {
+          "first": 93,
+          "repeat": 94
+        },
+        "53": {
           "first": 94,
           "repeat": 95
         },
-        "53": {
-          "first": 95,
-          "repeat": 96
-        },
         "54": {
-          "first": 95,
-          "repeat": 96
+          "first": 94,
+          "repeat": 95
         },
         "55": {
+          "first": 95,
+          "repeat": 95
+        },
+        "56": {
+          "first": 95,
+          "repeat": 96
+        },
+        "57": {
+          "first": 95,
+          "repeat": 96
+        },
+        "58": {
+          "first": 96,
+          "repeat": 96
+        },
+        "59": {
           "first": 96,
           "repeat": 97
         },
-        "56": {
-          "first": 97,
-          "repeat": 97
-        },
-        "57": {
-          "first": 97,
-          "repeat": 97
-        },
-        "58": {
-          "first": 97,
-          "repeat": 97
-        },
-        "59": {
-          "first": 97,
-          "repeat": 97
-        },
         "60": {
-          "first": 97,
-          "repeat": 98
+          "first": 96,
+          "repeat": 97
         },
         "61": {
-          "first": 98,
-          "repeat": 98
+          "first": 96,
+          "repeat": 97
         },
         "62": {
-          "first": 98,
-          "repeat": 98
+          "first": 97,
+          "repeat": 97
         },
         "63": {
-          "first": 98,
-          "repeat": 98
+          "first": 97,
+          "repeat": 97
         },
         "64": {
-          "first": 98,
+          "first": 97,
           "repeat": 98
         },
         "65": {
-          "first": 98,
+          "first": 97,
           "repeat": 98
         },
         "66": {
           "first": 98,
-          "repeat": 99
+          "repeat": 98
         },
         "67": {
-          "first": 99,
-          "repeat": 99
+          "first": 98,
+          "repeat": 98
         },
         "68": {
-          "first": 99,
-          "repeat": 99
+          "first": 98,
+          "repeat": 98
         },
         "69": {
-          "first": 99,
-          "repeat": 99
+          "first": 98,
+          "repeat": 98
         },
         "70": {
-          "first": 99,
-          "repeat": 99
+          "first": 98,
+          "repeat": 98
         },
         "71": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "72": {
-          "first": 99,
+          "first": 98,
           "repeat": 99
         },
         "73": {
@@ -39718,19 +39718,19 @@
           "repeat": 99
         },
         "80": {
-          "first": 100,
-          "repeat": 100
+          "first": 99,
+          "repeat": 99
         },
         "81": {
-          "first": 100,
-          "repeat": 100
+          "first": 99,
+          "repeat": 99
         },
         "82": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "83": {
-          "first": 100,
+          "first": 99,
           "repeat": 100
         },
         "84": {
@@ -39874,6 +39874,250 @@
           "repeat": 100
         },
         "119": {
+          "first": 100,
+          "repeat": 100
+        },
+        "120": {
+          "first": 100,
+          "repeat": 100
+        },
+        "121": {
+          "first": 100,
+          "repeat": 100
+        },
+        "122": {
+          "first": 100,
+          "repeat": 100
+        },
+        "123": {
+          "first": 100,
+          "repeat": 100
+        },
+        "124": {
+          "first": 100,
+          "repeat": 100
+        },
+        "125": {
+          "first": 100,
+          "repeat": 100
+        },
+        "126": {
+          "first": 100,
+          "repeat": 100
+        },
+        "127": {
+          "first": 100,
+          "repeat": 100
+        },
+        "128": {
+          "first": 100,
+          "repeat": 100
+        },
+        "129": {
+          "first": 100,
+          "repeat": 100
+        },
+        "130": {
+          "first": 100,
+          "repeat": 100
+        },
+        "131": {
+          "first": 100,
+          "repeat": 100
+        },
+        "132": {
+          "first": 100,
+          "repeat": 100
+        },
+        "133": {
+          "first": 100,
+          "repeat": 100
+        },
+        "134": {
+          "first": 100,
+          "repeat": 100
+        },
+        "135": {
+          "first": 100,
+          "repeat": 100
+        },
+        "136": {
+          "first": 100,
+          "repeat": 100
+        },
+        "137": {
+          "first": 100,
+          "repeat": 100
+        },
+        "138": {
+          "first": 100,
+          "repeat": 100
+        },
+        "139": {
+          "first": 100,
+          "repeat": 100
+        },
+        "140": {
+          "first": 100,
+          "repeat": 100
+        },
+        "141": {
+          "first": 100,
+          "repeat": 100
+        },
+        "142": {
+          "first": 100,
+          "repeat": 100
+        },
+        "143": {
+          "first": 100,
+          "repeat": 100
+        },
+        "144": {
+          "first": 100,
+          "repeat": 100
+        },
+        "145": {
+          "first": 100,
+          "repeat": 100
+        },
+        "146": {
+          "first": 100,
+          "repeat": 100
+        },
+        "147": {
+          "first": 100,
+          "repeat": 100
+        },
+        "148": {
+          "first": 100,
+          "repeat": 100
+        },
+        "149": {
+          "first": 100,
+          "repeat": 100
+        },
+        "150": {
+          "first": 100,
+          "repeat": 100
+        },
+        "151": {
+          "first": 100,
+          "repeat": 100
+        },
+        "152": {
+          "first": 100,
+          "repeat": 100
+        },
+        "153": {
+          "first": 100,
+          "repeat": 100
+        },
+        "154": {
+          "first": 100,
+          "repeat": 100
+        },
+        "155": {
+          "first": 100,
+          "repeat": 100
+        },
+        "156": {
+          "first": 100,
+          "repeat": 100
+        },
+        "157": {
+          "first": 100,
+          "repeat": 100
+        },
+        "158": {
+          "first": 100,
+          "repeat": 100
+        },
+        "159": {
+          "first": 100,
+          "repeat": 100
+        },
+        "160": {
+          "first": 100,
+          "repeat": 100
+        },
+        "161": {
+          "first": 100,
+          "repeat": 100
+        },
+        "162": {
+          "first": 100,
+          "repeat": 100
+        },
+        "163": {
+          "first": 100,
+          "repeat": 100
+        },
+        "164": {
+          "first": 100,
+          "repeat": 100
+        },
+        "165": {
+          "first": 100,
+          "repeat": 100
+        },
+        "166": {
+          "first": 100,
+          "repeat": 100
+        },
+        "167": {
+          "first": 100,
+          "repeat": 100
+        },
+        "168": {
+          "first": 100,
+          "repeat": 100
+        },
+        "169": {
+          "first": 100,
+          "repeat": 100
+        },
+        "170": {
+          "first": 100,
+          "repeat": 100
+        },
+        "171": {
+          "first": 100,
+          "repeat": 100
+        },
+        "172": {
+          "first": 100,
+          "repeat": 100
+        },
+        "173": {
+          "first": 100,
+          "repeat": 100
+        },
+        "174": {
+          "first": 100,
+          "repeat": 100
+        },
+        "175": {
+          "first": 100,
+          "repeat": 100
+        },
+        "176": {
+          "first": 100,
+          "repeat": 100
+        },
+        "177": {
+          "first": 100,
+          "repeat": 100
+        },
+        "178": {
+          "first": 100,
+          "repeat": 100
+        },
+        "179": {
+          "first": 100,
+          "repeat": 100
+        },
+        "180": {
           "first": 100,
           "repeat": 100
         }
